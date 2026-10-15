@@ -65,6 +65,17 @@ int app_init(app_t *app, app_settings_loader *settings_loader, int argc, char *a
     backend_init(&app->backend, app);
 
 #if TARGET_WEBOS
+    /* These hints live in the webOS SDL port. sdl2-compat's SDL2 headers do
+     * not declare them; SDL3 on webOS still reads the same hint strings. */
+#ifndef SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_BACK
+#define SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_BACK "SDL_WEBOS_ACCESS_POLICY_KEYS_BACK"
+#define SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_EXIT "SDL_WEBOS_ACCESS_POLICY_KEYS_EXIT"
+#define SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_HOME "SDL_WEBOS_ACCESS_POLICY_KEYS_HOME"
+#define SDL_HINT_WEBOS_ACCESS_POLICY_RIBBON "SDL_WEBOS_ACCESS_POLICY_RIBBON"
+#define SDL_HINT_WEBOS_CURSOR_SLEEP_TIME "SDL_WEBOS_CURSOR_SLEEP_TIME"
+#define SDL_HINT_WEBOS_CURSOR_FREQUENCY "SDL_WEBOS_CURSOR_FREQUENCY"
+#define SDL_HINT_WEBOS_CURSOR_CALIBRATION_DISABLE "SDL_WEBOS_CURSOR_CALIBRATION_DISABLE"
+#endif
     SDL_SetHint(SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_BACK, "true");
     SDL_SetHint(SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_EXIT, "true");
     /* Always capture Home (and Win, same policy class) so the TV does not steal them
@@ -77,12 +88,16 @@ int app_init(app_t *app, app_settings_loader *settings_loader, int argc, char *a
     /* Do not ignore Nintendo VID 0x057e over Bluetooth. That wildcard hid every
      * Switch-mode pad (including 8BitDo) from SDL HIDAPI and left rumble on
      * hid-nintendo, which never finishes on those clones (PR #78). */
+    /* NDL has to be initialized before SDL takes the video plane. On webOS 6
+     * (C1) DirectMediaInit fails once SDL video is up, and a second call from
+     * the audio and video drivers segfaults inside libNDL. webOS 11 (C5)
+     * tolerates the old order; doing NDL first keeps both on ndl-webos5. */
+    SS4S_PostInit(argc, argv);
 #else
     if (app->settings.syskey_capture) {
         SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, "1");
     }
 #endif
-    // DO not init video subsystem before NDL/LGNC initialization
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
         commons_log_fatal("APP", "Failed to initialize SDL video subsystem: %s", SDL_GetError());
         return -1;
@@ -98,7 +113,9 @@ int app_init(app_t *app, app_settings_loader *settings_loader, int argc, char *a
 
     global = app;
 
+#if !TARGET_WEBOS
     SS4S_PostInit(argc, argv);
+#endif
     return 0;
 }
 

@@ -106,7 +106,7 @@ lv_obj_t *pref_pane_container(lv_obj_t *parent) {
     lv_obj_set_style_radius(view, 0, 0);
     lv_obj_set_style_border_opa(view, LV_OPA_TRANSP, 0);
     lv_obj_set_style_pad_all(view, 0, 0);
-    lv_obj_set_style_pad_row(view, LV_DPX(2), 0);
+    lv_obj_set_style_pad_row(view, LV_DPX(4), 0);
     return view;
 }
 
@@ -114,14 +114,14 @@ lv_obj_t *pref_focus_row(lv_obj_t *parent, const char *title) {
     lv_obj_t *row = lv_obj_class_create_obj(&pref_row_class, parent);
     lv_obj_class_init_obj(row);
     lv_obj_set_width(row, LV_PCT(100));
-    lv_obj_set_height(row, LV_DPX(72));
+    lv_obj_set_height(row, PREF_ROW_HEIGHT);
     lv_obj_add_flag(row, LV_OBJ_FLAG_EVENT_BUBBLE);
     lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_layout(row, LV_LAYOUT_FLEX);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_hor(row, LV_DPX(12), 0);
-    lv_obj_set_style_pad_gap(row, LV_DPX(16), 0);
+    lv_obj_set_style_pad_hor(row, LV_DPX(16), 0);
+    lv_obj_set_style_pad_gap(row, LV_DPX(12), 0);
     lv_obj_set_style_radius(row, LV_DPX(8), 0);
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
 
@@ -165,12 +165,35 @@ void pref_row_bind_control(lv_obj_t *row, lv_obj_t *control) {
 
 static void pref_checkable_pointer_cb(lv_event_t *event);
 
+void pref_style_inline_control(lv_obj_t *ctrl) {
+    if (ctrl == NULL) {
+        return;
+    }
+    lv_obj_set_width(ctrl, PREF_CONTROL_WIDTH);
+    lv_obj_clear_flag(ctrl, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+    if (lv_obj_has_class(ctrl, &lv_dropdown_class)) {
+        lv_obj_set_height(ctrl, LV_DPX(40));
+    }
+}
+
+void pref_style_full_button(lv_obj_t *btn) {
+    if (btn == NULL) {
+        return;
+    }
+    lv_obj_set_width(btn, LV_PCT(100));
+    lv_obj_set_height(btn, PREF_ROW_HEIGHT);
+    lv_obj_set_style_pad_hor(btn, LV_DPX(16), 0);
+    lv_obj_set_style_pad_ver(btn, 0, 0);
+    lv_obj_set_style_radius(btn, LV_DPX(8), 0);
+}
+
 lv_obj_t *pref_checkbox(lv_obj_t *parent, const char *title, bool *value, bool reverse) {
     lv_obj_t *checkbox = lv_checkbox_create(parent);
     lv_checkbox_set_text(checkbox, title);
-    lv_obj_set_size(checkbox, LV_PCT(100), LV_DPX(72));
-    lv_obj_set_style_pad_hor(checkbox, LV_DPX(12), 0);
-    lv_obj_set_style_pad_ver(checkbox, LV_DPX(10), 0);
+    lv_obj_set_size(checkbox, LV_PCT(100), PREF_ROW_HEIGHT);
+    lv_obj_set_style_pad_hor(checkbox, LV_DPX(16), 0);
+    lv_obj_set_style_pad_top(checkbox, LV_DPX(12), 0);
+    lv_obj_set_style_pad_bottom(checkbox, LV_DPX(8), 0);
     lv_obj_set_style_radius(checkbox, LV_DPX(8), 0);
     pref_attrs_t *attrs = lv_mem_alloc(sizeof(pref_attrs_t));
     attrs->checkbox.ref = value;
@@ -339,9 +362,10 @@ lv_obj_t *pref_desc_label(lv_obj_t *parent, const char *title, bool focusable) {
     }
     lv_obj_set_width(label, LV_PCT(100));
     lv_obj_add_flag(label, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
-    lv_obj_set_style_pad_left(label, LV_DPX(30), 0);
+    lv_obj_set_style_pad_hor(label, LV_DPX(16), 0);
     lv_obj_set_style_pad_top(label, 0, 0);
-    lv_obj_set_style_pad_bottom(label, LV_DPX(2), 0);
+    lv_obj_set_style_pad_bottom(label, LV_DPX(4), 0);
+    lv_obj_set_style_text_color(label, ml_color_hex(ML_COLOR_TEXT_MUTED), 0);
     lv_obj_set_style_text_line_space(label, 0, 0);
     lv_obj_set_style_text_font(label, lv_theme_get_font_small(parent), 0);
     lv_obj_set_style_outline_opa(label, LV_OPA_50, LV_STATE_FOCUS_KEY);
@@ -360,7 +384,10 @@ lv_obj_t *pref_header(lv_obj_t *parent, const char *title) {
     lv_obj_t *header = lv_label_create(parent);
     lv_label_set_text(header, title);
     lv_obj_set_width(header, LV_PCT(100));
-    lv_obj_set_style_pad_bottom(header, LV_DPX(4), 0);
+    lv_obj_set_style_pad_top(header, LV_DPX(12), 0);
+    lv_obj_set_style_pad_bottom(header, LV_DPX(6), 0);
+    lv_obj_set_style_pad_left(header, LV_DPX(16), 0);
+    lv_obj_set_style_text_color(header, ml_color_hex(ML_COLOR_TEXT_MUTED), 0);
     lv_obj_set_style_border_side(header, LV_BORDER_SIDE_BOTTOM, 0);
     lv_obj_set_style_border_opa(header, LV_OPA_30, 0);
     lv_obj_set_style_border_color(header, ml_color_hex(ML_COLOR_BORDER), 0);

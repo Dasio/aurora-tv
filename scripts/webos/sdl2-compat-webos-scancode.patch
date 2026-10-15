@@ -1,0 +1,23 @@
+--- a/src/sdl2_compat.c
++++ b/src/sdl2_compat.c
+@@ -2176,6 +2176,10 @@ static SDL_Scancode SDL2ScancodeToSDL3Scancode(SDL2_Scancode scancode)
+     case SDL2_SCANCODE_MEDIASELECT:
+         return SDL_SCANCODE_MEDIA_SELECT;
+     default:
++        /* webOS SDL3 remote scancodes. Stock sdl2-compat turns these into UNKNOWN. */
++        if ((unsigned)scancode >= 352 && (unsigned)scancode <= 375) {
++            return (SDL_Scancode)scancode;
++        }
+         return SDL_SCANCODE_UNKNOWN;
+     }
+ }
+@@ -2207,6 +2211,9 @@ static SDL2_Scancode SDL3ScancodeToSDL2Scancode(SDL_Scancode scancode)
+     case SDL_SCANCODE_MEDIA_SELECT:
+         return SDL2_SCANCODE_MEDIASELECT;
+     default:
++        if ((unsigned)scancode >= 352 && (unsigned)scancode <= 375) {
++            return (SDL2_Scancode)scancode;
++        }
+         return SDL2_SCANCODE_UNKNOWN;
+     }
+ }

@@ -27,7 +27,17 @@
 #include "util/i18n.h"
 #include "lvgl/util/lv_app_utils.h"
 
-#if FEATURE_WINDOW_FULLSCREEN_DESKTOP
+#if TARGET_WEBOS
+/* Do not pass a fullscreen flag. sdl2-compat turns SDL_WINDOW_FULLSCREEN into
+ * an exclusive modeset, and SDL3 lists the panel as a mode — that holds the
+ * plane NDL_DirectMediaLoad needs. SDL_WINDOW_FULLSCREEN_DESKTOP is rewritten
+ * to the fullscreen bit and applied inside SDL_CreateWindow; the webOS shell
+ * is a custom surface, SetFullscreen runs with no toplevel, and the process
+ * exits on the splash screen. WaylandWebOS_SetupSurface already sets
+ * _WEBOS_ACCESS_POLICY_FORCESTRETCH, so a window sized to the panel covers
+ * the screen. */
+#define APP_FULLSCREEN_FLAG 0
+#elif FEATURE_WINDOW_FULLSCREEN_DESKTOP
 #define APP_FULLSCREEN_FLAG SDL_WINDOW_FULLSCREEN_DESKTOP
 #else
 #define APP_FULLSCREEN_FLAG SDL_WINDOW_FULLSCREEN
@@ -89,6 +99,11 @@ void app_ui_open(app_ui_t *ui, bool open_launcher, const app_launch_params_t *pa
 #endif
     }
     lv_disp_drv_t *driver = lv_app_disp_drv_create(ui->window, ui->dpi);
+#ifdef TARGET_WEBOS
+    /* The accelerated renderer can recreate the window. sdl2-compat would
+     * start the IME again on that window if text events were still enabled. */
+    SDL_StopTextInput();
+#endif
     lv_disp_t *disp = lv_disp_drv_register(driver);
     disp->bg_color = lv_color_make(0, 0, 0);
     disp->bg_opa = 0;
@@ -308,6 +323,17 @@ void ui_cb_destroy_fragment(lv_event_t *e) {
 
 SDL_Window *app_ui_create_window(app_ui_t *ui) {
     Uint32 win_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+#ifdef TARGET_WEBOS
+    /* Video is a plane under this window. The compositor punches through
+     * only where the framebuffer alpha is 0. SDL leaves EGL_ALPHA_SIZE at 0
+     * unless asked before the window exists, and an opaque buffer hides the
+     * picture while audio keeps playing. */
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+    win_flags |= SDL_WINDOW_OPENGL;
+#endif
     int win_x = SDL_WINDOWPOS_UNDEFINED, win_y = SDL_WINDOWPOS_UNDEFINED,
         win_width = 1920, win_height = 1080;
     if (app_configuration->fullscreen) {
@@ -350,6 +376,15 @@ SDL_Window *app_ui_create_window(app_ui_t *ui) {
     SDL_GetWindowSize(win, &w, &h);
     SDL_assert_release(w > 0 && h > 0);
     ui_display_size(ui, w, h);
+#ifdef TARGET_WEBOS
+    /* sdl2-compat treats "text events enabled" as text input being active, and
+     * video init enables those events on every platform except iOS/Android.
+     * Creating the window then starts the webOS IME. The screen-keyboard hint
+     * does not apply: the webOS driver raises the panel from StartTextInput
+     * itself. Stop it once the window exists. A later textarea focus calls
+     * SDL_StartTextInput again. */
+    SDL_StopTextInput();
+#endif
     return win;
 }
 

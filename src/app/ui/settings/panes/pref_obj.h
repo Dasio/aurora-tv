@@ -5,6 +5,10 @@
 /** Row-bound controls are not separate D-pad stops (parent row owns focus). */
 #define PREF_ROW_BOUND_FLAG LV_OBJ_FLAG_USER_1
 
+/** Shared list metrics. Focus targets stay the same widgets as before. */
+#define PREF_ROW_HEIGHT LV_DPX(52)
+#define PREF_CONTROL_WIDTH LV_DPX(300)
+
 typedef struct pref_dropdown_int_entry_t {
     const char *name;
     int value;
@@ -40,6 +44,12 @@ lv_obj_t *pref_row_get_control(const lv_obj_t *row);
 void pref_row_bind_control(lv_obj_t *row, lv_obj_t *control);
 
 lv_obj_t *pref_checkbox(lv_obj_t *parent, const char *title, bool *value, bool reverse);
+
+/** Fixed width on the right of a focus row. Dropdowns also get a matching height. */
+void pref_style_inline_control(lv_obj_t *ctrl);
+
+/** Full-width action button with the same height as a settings row. */
+void pref_style_full_button(lv_obj_t *btn);
 
 /** Toggle checkbox state and write back (Enter / explicit click only). */
 void pref_checkbox_toggle(lv_obj_t *checkbox);

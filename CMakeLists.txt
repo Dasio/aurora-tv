@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
-set(MOONLIGHT_VERSION "1.3.0")
+set(MOONLIGHT_VERSION "1.3.1")
 
 project(moonlight VERSION ${MOONLIGHT_VERSION} LANGUAGES C CXX)
 
@@ -147,8 +147,7 @@ set(BUILD_SHARED_CORE_LIBS OFF)
 
 if (TARGET_WEBOS)
     set(CMAKE_INSTALL_LIBDIR lib/backports)
-    set(SDL2_BACKPORT_RELEASE "release-2.30.12-webos.6")
-    include(ExternalSDL2BackportForWebOS)
+    include(ExternalSDL3ForWebOS)
     unset(CMAKE_INSTALL_LIBDIR)
 else ()
     pkg_check_modules(SDL2 REQUIRED sdl2>=2.0.4)
@@ -268,6 +267,10 @@ endif ()
 
 target_include_directories(moonlight-lib SYSTEM PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS} ${INIH_INCLUDE_DIRS})
+if (TARGET_WEBOS)
+    target_compile_options(moonlight-lib PRIVATE
+            -include "${CMAKE_SOURCE_DIR}/src/app/platform/webos/sdl_webos_scancode.h")
+endif ()
 target_link_libraries(moonlight-lib PUBLIC
         m ${CMAKE_DL_LIBS} Threads::Threads ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES}
         moonlight-common-c gamestream lvgl ${INIH_LIBRARIES} ${CURL_LIBRARIES}

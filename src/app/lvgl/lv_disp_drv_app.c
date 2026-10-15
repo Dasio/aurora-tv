@@ -77,6 +77,9 @@ void lv_app_redraw_now(lv_disp_drv_t *disp_drv) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
             SDL_RenderFillRect(renderer, NULL);
         } else {
+            /* NONE so the clear replaces the buffer, including alpha 0.
+             * BLEND with alpha 0 would leave the previous opaque frame. */
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
             SDL_RenderClear(renderer);
         }
