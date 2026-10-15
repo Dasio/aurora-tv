@@ -14,7 +14,6 @@ typedef struct input_pane_t {
     lv_fragment_t base;
 
     lv_obj_t *absmouse_toggle;
-    lv_obj_t *absmouse_hint;
     lv_obj_t *deadzone_label;
     lv_obj_t *deadzone_slider;
     lv_obj_t *swap_abxy_toggle;
@@ -73,14 +72,7 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
             locstr("Send as mouse"), TOUCHPAD_MODE_MOUSE, false};
 
     pref_checkbox(view, locstr("View-only mode"), &app_configuration->viewonly, false);
-    pref_desc_label(view, locstr("Don't send mouse, keyboard or gamepad input to host computer."), false);
-
     pref_checkbox(view, locstr("Capture system keys"), &app_configuration->syskey_capture, false);
-    pref_desc_label(view,
-                    locstr("Send Win/Meta to the host. On webOS, Home is always captured for "
-                           "streaming; turn this on to also forward Win. Restart the app after "
-                           "changing. Default is on."),
-                    false);
 
     pref_header(view, locstr("Mouse"));
 
@@ -88,101 +80,69 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     lv_obj_t *hwmouse_toggle = pref_checkbox(view, locstr("Use mouse hardware"),
                                              &app_configuration->hardware_mouse, false);
     lv_obj_add_event_cb(hwmouse_toggle, hwmouse_state_update_cb, LV_EVENT_VALUE_CHANGED, pane);
-    pref_desc_label(view, locstr("Use plugged mouse device only when streaming. "
-                                 "This will have better performance, but absolute mouse mode will not be enabled."),
-                    false);
 #endif
 
     pane->absmouse_toggle = pref_checkbox(view, locstr("Absolute mouse mode"),
                                           &app_configuration->absmouse, false);
-    pane->absmouse_hint = pref_desc_label(view, locstr("Better for remote desktop. "
-                                                       "For some games, mouse will not work properly."), false);
 
     pref_header(view, locstr("Gamepad"));
 
-    pane->deadzone_label = pref_title_label(view, locstr("Analog stick deadzone"));
-    pane->deadzone_slider = pref_slider(view, &app_configuration->stick_deadzone, 0, 20, 1);
-    lv_obj_set_width(pane->deadzone_slider, LV_PCT(100));
+    lv_obj_t *dz_row = pref_focus_row(view, locstr("Analog stick deadzone"));
+    pane->deadzone_label = lv_obj_get_child(dz_row, 0);
+    pane->deadzone_slider = pref_slider(dz_row, &app_configuration->stick_deadzone, 0, 20, 1);
+    pref_style_inline_control(pane->deadzone_slider);
+    pref_row_bind_control(dz_row, pane->deadzone_slider);
     lv_obj_add_event_cb(pane->deadzone_slider, on_deadzone_changed, LV_EVENT_VALUE_CHANGED, pane);
-    pref_desc_label(view, locstr("Note: Some games can enforce a larger deadzone "
-                                 "than what Aurora is configured to use."),
-                    false);
 
     pref_checkbox(view, locstr("Virtual mouse"), &app_configuration->virtual_mouse, false);
-    pref_desc_label(view, locstr("When enabled, virtual mouse starts active at the beginning of a stream. "
-                                 "Toggle anytime from the stream overlay Virtual Mouse button. "
-                                 "Right stick moves the cursor, left stick scrolls, LT/RT are left/right mouse buttons."),
-                    false);
-
     pane->swap_abxy_toggle = pref_checkbox(view, locstr("Swap ABXY buttons"), &app_configuration->swap_abxy, false);
-    pref_desc_label(view, locstr("Swap A/B and X/Y gamepad buttons. Useful when you prefer Nintendo-like layouts."),
-                    false);
 
     pref_header(view, locstr("Gamepad touchpad"));
 
-    pref_title_label(view, locstr("Mode"));
-    lv_obj_t *mode_dropdown = pref_dropdown_int(view, pane->touchpad_mode_entries,
+    lv_obj_t *mode_row = pref_focus_row(view, locstr("Mode"));
+    lv_obj_t *mode_dropdown = pref_dropdown_int(mode_row, pane->touchpad_mode_entries,
                                                 sizeof(pane->touchpad_mode_entries) /
                                                         sizeof(*pane->touchpad_mode_entries),
                                                 &app_configuration->touchpad_mode, NULL);
-    lv_obj_set_width(mode_dropdown, LV_PCT(100));
-    pref_desc_label(view, locstr("Send as touchpad forwards touches to the host, for games "
-                                 "with built-in touchpad support. Send as mouse uses the "
-                                 "touchpad as a trackpad instead."), false);
+    pref_style_inline_control(mode_dropdown);
+    pref_row_bind_control(mode_row, mode_dropdown);
 
-    pane->touchpad_speed_label = pref_title_label(view, NULL);
-    lv_obj_t *sensitivity_slider = pref_slider(view, &app_configuration->touchpad_speed,
+    lv_obj_t *speed_row = pref_focus_row(view, locstr("Pointer speed"));
+    pane->touchpad_speed_label = lv_obj_get_child(speed_row, 0);
+    lv_obj_t *sensitivity_slider = pref_slider(speed_row, &app_configuration->touchpad_speed,
                                                TOUCHPAD_SPEED_MIN,
                                                TOUCHPAD_SPEED_MAX, 5);
-    lv_obj_set_width(sensitivity_slider, LV_PCT(100));
+    pref_style_inline_control(sensitivity_slider);
+    pref_row_bind_control(speed_row, sensitivity_slider);
     lv_obj_add_event_cb(sensitivity_slider, on_touchpad_speed_changed,
                         LV_EVENT_VALUE_CHANGED, pane);
-    pref_desc_label(view, locstr("Adjust pointer speed when the touchpad is used as a mouse."), false);
 
     pref_checkbox(view, locstr("Multi-touch gestures"),
                   &app_configuration->touchpad_multitouch, false);
-    pref_desc_label(view, locstr("Use two fingers to scroll and to right click. "
-                                 "Turn off if you trigger them by accident."), false);
-
     pref_checkbox(view, locstr("Natural scrolling"),
                   &app_configuration->touchpad_natural_scroll, false);
-    pref_desc_label(view, locstr("Scrolling follows your fingers, like on a phone."), false);
 
     pref_header(view, locstr("Controller"));
     pref_checkbox(view, locstr("Report battery to host"), &app_configuration->report_gamepad_battery, false);
-    pref_desc_label(view, locstr("Advertise battery state to Vibepollo/Sunshine so the host virtual pad "
-                                 "matches Xbox, DualSense, DS4, or Switch Pro capabilities from this TV."),
-                    false);
-
-    pref_desc_label(view, locstr("Hold Select/Back for 4 seconds during streaming to pin or unpin performance stats. "
-                                 "Open the on-screen keyboard from the stream overlay, Magic Remote BLUE, "
-                                 "or gamepad Y while virtual mouse is active."),
-                    false);
 
     pref_header(view, locstr("Gamepad test"));
     pane->gamepad_report_label = pref_desc_label(view, NULL, false);
-    lv_obj_set_width(pane->gamepad_report_label, LV_PCT(100));
 
     lv_obj_t *refresh_btn = lv_btn_create(view);
-    lv_obj_set_width(refresh_btn, LV_PCT(100));
+    pref_style_full_button(refresh_btn);
     lv_obj_t *refresh_lbl = lv_label_create(refresh_btn);
     lv_label_set_text(refresh_lbl, locstr("Detect connected gamepads"));
     lv_obj_center(refresh_lbl);
     lv_obj_add_event_cb(refresh_btn, on_gamepad_refresh_clicked, LV_EVENT_CLICKED, pane);
 
     lv_obj_t *rumble_btn = lv_btn_create(view);
-    lv_obj_set_width(rumble_btn, LV_PCT(100));
+    pref_style_full_button(rumble_btn);
     lv_obj_t *rumble_lbl = lv_label_create(rumble_btn);
     lv_label_set_text(rumble_lbl, locstr("Test rumble"));
     lv_obj_center(rumble_lbl);
     lv_obj_add_event_cb(rumble_btn, on_gamepad_rumble_clicked, LV_EVENT_CLICKED, pane);
 
     pane->gamepad_test_result = pref_desc_label(view, NULL, false);
-    lv_obj_set_width(pane->gamepad_test_result, LV_PCT(100));
-    pref_desc_label(view, locstr("Rumble here is produced by this TV alone, with no host involved. "
-                                 "If the pad shakes here but stays still in a game, the host is not "
-                                 "sending rumble and the problem is not on this side."),
-                    false);
 
     gamepad_report_update(pane);
 
@@ -212,12 +172,8 @@ static void hwmouse_state_update_cb(lv_event_t *e) {
 static void hwmouse_state_update(input_pane_t *pane) {
     if (app_configuration->hardware_mouse) {
         lv_obj_add_state(pane->absmouse_toggle, LV_STATE_DISABLED);
-        lv_label_set_text(pane->absmouse_hint, locstr("Absolute mouse mode can't be used when "
-                                                      "\"Use mouse hardware\" enabled."));
     } else {
         lv_obj_clear_state(pane->absmouse_toggle, LV_STATE_DISABLED);
-        lv_label_set_text(pane->absmouse_hint, locstr("Better for remote desktop. "
-                                                      "For some games, mouse will not work properly."));
     }
 }
 #endif

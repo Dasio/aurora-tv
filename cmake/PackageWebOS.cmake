@@ -23,9 +23,11 @@ install(CODE "file(MAKE_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}/assets\")"
             OUTPUT_FILE \"\${CMAKE_INSTALL_PREFIX}/assets/gamecontrollerdb.txt\"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND_ERROR_IS_FATAL ANY)")
 
-# Fake library for cURL ABI issue
-add_dependencies(moonlight commons-curl-abi-fix)
-install(TARGETS commons-curl-abi-fix LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} NAMELINK_SKIP)
+# The curl ABI shim is a libcurl.so.4 that itself needs libcurl.so.5.
+# webOS 6 still ships that so.5 symlink; webOS 11 (C5) only has libcurl.so.4.
+# Installing the shim in the app lib dir overrides the system library and
+# the C5 then fails to start. Both of these TVs have libcurl.so.4, which is
+# the soname Aurora is linked against, so the system library is the one to use.
 
 set(CPACK_PACKAGE_NAME "${WEBOS_APPINFO_ID}")
 set(CPACK_GENERATOR "External")

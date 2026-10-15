@@ -9,6 +9,9 @@
 
 #if TARGET_WEBOS
 #include <SDL.h>
+#include <stdbool.h>
+extern bool SDL_webOSGetPanelResolution(int *width, int *height);
+extern bool SDL_webOSGetRefreshRate(int *rate);
 #endif
 
 static void menu_cancel_cb(lv_event_t *e);

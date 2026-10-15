@@ -21,6 +21,12 @@
 #include "panes/pref_obj.h"
 #include "lvgl/input/lv_drv_sdl_key.h"
 
+#if TARGET_WEBOS
+#include <stdbool.h>
+extern bool SDL_webOSGetPanelResolution(int *width, int *height);
+extern bool SDL_webOSGetRefreshRate(int *rate);
+#endif
+
 typedef struct {
     const char *icon;
     const char *name;
@@ -1652,8 +1658,8 @@ static lv_obj_t *embed_add_submenu_row(lv_obj_t *parent, settings_controller_t *
                                        const lv_fragment_class_t *cls) {
     lv_obj_t *btn = lv_btn_create(parent);
     lv_obj_set_width(btn, LV_PCT(100));
-    lv_obj_set_height(btn, LV_DPX(72));
-    lv_obj_set_style_pad_hor(btn, LV_DPX(12), 0);
+    lv_obj_set_height(btn, PREF_ROW_HEIGHT);
+    lv_obj_set_style_pad_hor(btn, LV_DPX(16), 0);
     lv_obj_set_style_pad_ver(btn, 0, 0);
     lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, 0);
     lv_obj_set_style_bg_opa(btn, LV_OPA_20, LV_STATE_FOCUS_KEY);

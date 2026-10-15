@@ -18,8 +18,9 @@ typedef struct experimental_pane_t {
     lv_fragment_t base;
     settings_controller_t *parent;
     lv_obj_t *idr_checkbox;
+    lv_obj_t *idr_row;
     lv_obj_t *idr_slider;
-    lv_obj_t *idr_hint;
+    lv_obj_t *idr_value_label;
     int idr_refresh_slider_value;
     lv_obj_t *abr_dropdown;
     pref_dropdown_int_entry_t abr_entries[3];
@@ -96,11 +97,8 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     lv_obj_t *lang_row = pref_focus_row(view, locstr("Language"));
     lv_obj_t *lang_dd = pref_dropdown_string(lang_row, pane->lang_entries, (size_t) pane->lang_entries_len,
                                             &app_configuration->language);
-    lv_obj_set_width(lang_dd, LV_PCT(100));
+    pref_style_inline_control(lang_dd);
     pref_row_bind_control(lang_row, lang_dd);
-    pref_desc_label(view,
-                    locstr("Applies as soon as you change it. System Language follows the TV."),
-                    false);
     lv_obj_add_event_cb(lang_dd, language_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
 #endif
 
@@ -114,9 +112,6 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
 #if TARGET_WEBOS
     if (webos_game_mode_is_rooted()) {
         pref_checkbox(view, locstr("Game mode"), &app_configuration->game_mode, false);
-        pref_desc_label(view,
-                        locstr("Picture/sound Game for the stream (IGR on). Restored when it ends."),
-                        false);
     }
 #endif
 
@@ -124,23 +119,19 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
 
     lv_obj_t *full_range = pref_checkbox(view, locstr("Full range YUV (SDR only)"),
                                          &app_configuration->force_full_color_range, false);
-    pref_desc_label(view,
-                    locstr("Ask the host for full-range levels. Wrong for most TVs, which expect limited "
-                           "range — turn on only if SDR looks washed out."),
-                    false);
     lv_obj_add_event_cb(full_range, reconnect_cb, LV_EVENT_VALUE_CHANGED, pane);
 
     lv_obj_t *sliced = pref_checkbox(view, locstr("HEVC sliced frames"),
                                      &app_configuration->hevc_sliced_frames, false);
-    pref_desc_label(view,
-                    locstr("Ask the host to encode HEVC in multiple slices (faster host pipelining). "
-                           "The TV still gets one complete frame per feed. Off by default — turn on "
-                           "only if you need lower encode latency and the picture stays clean."),
-                    false);
     lv_obj_add_event_cb(sliced, reconnect_cb, LV_EVENT_VALUE_CHANGED, pane);
 
     lv_obj_t *idr_checkbox = lv_checkbox_create(view);
     lv_checkbox_set_text(idr_checkbox, locstr("Periodic decoder refresh (HEVC)"));
+    lv_obj_set_size(idr_checkbox, LV_PCT(100), PREF_ROW_HEIGHT);
+    lv_obj_set_style_pad_hor(idr_checkbox, LV_DPX(16), 0);
+    lv_obj_set_style_pad_top(idr_checkbox, LV_DPX(12), 0);
+    lv_obj_set_style_pad_bottom(idr_checkbox, LV_DPX(8), 0);
+    lv_obj_set_style_radius(idr_checkbox, LV_DPX(8), 0);
     if (app_configuration->idr_refresh_interval_ms >= 500) {
         lv_obj_add_state(idr_checkbox, LV_STATE_CHECKED);
     }
@@ -149,12 +140,12 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
             ? app_configuration->idr_refresh_interval_ms
             : 10000;
     pref_checkbox_prepare_for_dpad(idr_checkbox);
-    lv_obj_t *idr_slider = pref_slider(view, &pane->idr_refresh_slider_value, 500, 60000, 500);
+    pane->idr_row = pref_focus_row(view, locstr("Refresh interval"));
+    pane->idr_value_label = lv_obj_get_child(pane->idr_row, 0);
+    lv_obj_t *idr_slider = pref_slider(pane->idr_row, &pane->idr_refresh_slider_value, 500, 60000, 500);
+    pref_style_inline_control(idr_slider);
+    pref_row_bind_control(pane->idr_row, idr_slider);
     pane->idr_slider = idr_slider;
-    pane->idr_hint = pref_desc_label(view,
-        locstr("Optional HEVC keyframe every N ms (0.5–60 s). Off by default. "
-               "Some TVs hitch at each refresh — leave OFF if you notice that."),
-        false);
     lv_obj_add_event_cb(idr_checkbox, idr_checkbox_activate, LV_EVENT_CLICKED, pane);
     lv_obj_add_event_cb(idr_slider, idr_refresh_slider_cb, LV_EVENT_VALUE_CHANGED, pane);
     idr_refresh_state_update(pane);
@@ -163,28 +154,22 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
 
     lv_obj_t *abr_checkbox = pref_checkbox(view, locstr("Adaptive bitrate"),
                                            &app_configuration->auto_adjust_bitrate, false);
-    pane->abr_dropdown = pref_dropdown_int(view, pane->abr_entries,
+    lv_obj_t *abr_row = pref_focus_row(view, locstr("Profile"));
+    pane->abr_dropdown = pref_dropdown_int(abr_row, pane->abr_entries,
                                            sizeof(pane->abr_entries) / sizeof(pane->abr_entries[0]),
                                            &app_configuration->abr_mode, NULL);
-    lv_obj_set_width(pane->abr_dropdown, LV_PCT(100));
-    pref_desc_label(view,
-                    locstr("Let the host lower the bitrate when the link drops packets, then ramp back up. "
-                           "Requires a Sunshine build with ABR support."),
-                    false);
+    pref_style_inline_control(pane->abr_dropdown);
+    pref_row_bind_control(abr_row, pane->abr_dropdown);
     lv_obj_add_event_cb(abr_checkbox, abr_checkbox_cb, LV_EVENT_VALUE_CHANGED, pane);
     lv_obj_add_event_cb(pane->abr_dropdown, reconnect_cb, LV_EVENT_VALUE_CHANGED, pane);
     abr_state_update(pane);
 
     pref_header(view, locstr("Reset"));
     lv_obj_t *reset_btn = lv_btn_create(view);
-    lv_obj_set_width(reset_btn, LV_PCT(100));
+    pref_style_full_button(reset_btn);
     lv_obj_t *reset_lbl = lv_label_create(reset_btn);
     lv_label_set_text(reset_lbl, locstr("Reset all settings to defaults"));
     lv_obj_center(reset_lbl);
-    pref_desc_label(view,
-                    locstr("Restores built-in defaults and rewrites moonlight.ini. Pairing keys are kept. "
-                           "Reconnect the stream after this."),
-                    false);
     lv_obj_add_event_cb(reset_btn, reset_defaults_clicked, LV_EVENT_CLICKED, pane);
 
     return view;
@@ -276,22 +261,24 @@ static void idr_refresh_state_update(experimental_pane_t *pane) {
     }
     if (!hevc_on) {
         lv_obj_add_state(pane->idr_checkbox, LV_STATE_DISABLED);
+        lv_obj_add_state(pane->idr_row, LV_STATE_DISABLED);
         lv_obj_add_state(pane->idr_slider, LV_STATE_DISABLED);
-        lv_label_set_text(pane->idr_hint, locstr("Enable HEVC (Stream settings) to use periodic refresh."));
     } else {
         lv_obj_clear_state(pane->idr_checkbox, LV_STATE_DISABLED);
         if (refresh_on) {
+            lv_obj_clear_state(pane->idr_row, LV_STATE_DISABLED);
             lv_obj_clear_state(pane->idr_slider, LV_STATE_DISABLED);
-            lv_label_set_text_fmt(pane->idr_hint,
-                                  locstr("Keyframe every %.1f s during HEVC. "
-                                         "May cause a brief hitch on some TVs."),
-                                  app_configuration->idr_refresh_interval_ms / 1000.0);
         } else {
+            lv_obj_add_state(pane->idr_row, LV_STATE_DISABLED);
             lv_obj_add_state(pane->idr_slider, LV_STATE_DISABLED);
-            lv_label_set_text(pane->idr_hint,
-                              locstr("Optional: keyframe every N seconds to reduce long-session "
-                                     "artifact drift (0.5–60 s when enabled)."));
         }
+    }
+    if (refresh_on) {
+        lv_label_set_text_fmt(pane->idr_value_label, "%s - %.1f s",
+                              locstr("Refresh interval"),
+                              app_configuration->idr_refresh_interval_ms / 1000.0);
+    } else {
+        lv_label_set_text(pane->idr_value_label, locstr("Refresh interval"));
     }
 }
 

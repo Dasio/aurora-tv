@@ -28,9 +28,7 @@ typedef struct {
     lv_obj_t *hevc_checkbox;
     lv_obj_t *av1_checkbox;
     lv_obj_t *hdr_checkbox;
-    lv_obj_t *hdr_hint;
     lv_obj_t *force_10bit_checkbox;
-    lv_obj_t *force_10bit_hint;
 
     pref_dropdown_string_entry_t *vdec_entries;
     int vdec_entries_len;
@@ -67,11 +65,6 @@ const lv_fragment_class_t settings_pane_basic_cls = {
 };
 
 #define BITRATE_STEP 1000
-
-static void style_row_control(lv_obj_t *ctrl) {
-    lv_obj_set_width(ctrl, LV_DPX(280));
-    lv_obj_clear_flag(ctrl, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-}
 
 static void pane_ctor(lv_fragment_t *self, void *args) {
     basic_pane_t *pane = (basic_pane_t *) self;
@@ -136,7 +129,7 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     lv_obj_t *res_row = pref_focus_row(view, locstr("Resolution"));
     lv_obj_t *res_dropdown = pref_dropdown_res(res_row, native_width, native_height, max_width, max_height,
                                                &app_configuration->stream.width, &app_configuration->stream.height);
-    style_row_control(res_dropdown);
+    pref_style_inline_control(res_dropdown);
     pref_row_bind_control(res_row, res_dropdown);
     lv_obj_add_event_cb(res_dropdown, on_res_fps_updated, LV_EVENT_VALUE_CHANGED, self);
 
@@ -150,17 +143,19 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     lv_obj_t *fps_row = pref_focus_row(view, locstr("Frame rate"));
     lv_obj_t *fps_dropdown = pref_dropdown_fps(fps_row, fps_options, (int) max_fps, &app_configuration->stream.fps,
                                                &app_configuration->client_refresh_rate_x100);
-    style_row_control(fps_dropdown);
+    pref_style_inline_control(fps_dropdown);
     pref_row_bind_control(fps_row, fps_dropdown);
     lv_obj_add_event_cb(fps_dropdown, on_res_fps_updated, LV_EVENT_VALUE_CHANGED, self);
 
     lv_obj_t *br_row = pref_focus_row(view, locstr("Bitrate"));
     pane->bitrate_label = lv_label_create(br_row);
-    lv_obj_set_width(pane->bitrate_label, LV_DPX(90));
+    lv_obj_set_width(pane->bitrate_label, LV_DPX(96));
     lv_obj_set_style_text_align(pane->bitrate_label, LV_TEXT_ALIGN_RIGHT, 0);
+    lv_obj_clear_flag(pane->bitrate_label, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
     unsigned int max = 400000;
     lv_obj_t *bitrate_slider = pref_slider(br_row, &app_configuration->stream.bitrate, 5000, (int) max, BITRATE_STEP);
-    lv_obj_set_width(bitrate_slider, LV_DPX(180));
+    lv_obj_set_width(bitrate_slider, LV_DPX(188));
+    lv_obj_clear_flag(bitrate_slider, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
     lv_obj_add_event_cb(bitrate_slider, on_bitrate_changed, LV_EVENT_VALUE_CHANGED, self);
     pane->bitrate_slider = bitrate_slider;
     pref_row_bind_control(br_row, bitrate_slider);
@@ -169,17 +164,15 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     lv_obj_t *vdec_row = pref_focus_row(view, locstr("Video backend"));
     lv_obj_t *vdec_dropdown = pref_dropdown_string(vdec_row, pane->vdec_entries, pane->vdec_entries_len,
                                                    &app_configuration->decoder);
-    style_row_control(vdec_dropdown);
+    pref_style_inline_control(vdec_dropdown);
     pref_row_bind_control(vdec_row, vdec_dropdown);
     lv_obj_add_event_cb(vdec_dropdown, module_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
 
     lv_obj_t *hevc_checkbox = pref_checkbox(view, locstr("HEVC"), &app_configuration->hevc, false);
-    lv_obj_set_height(hevc_checkbox, LV_DPX(72));
     pane->hevc_checkbox = hevc_checkbox;
     lv_obj_add_event_cb(hevc_checkbox, codec_checkbox_cb, LV_EVENT_VALUE_CHANGED, pane);
 
     lv_obj_t *av1_checkbox = pref_checkbox(view, locstr("AV1"), &app_configuration->av1, false);
-    lv_obj_set_height(av1_checkbox, LV_DPX(72));
     pane->av1_checkbox = av1_checkbox;
     if (app->ss4s.video_cap.codecs & SS4S_VIDEO_AV1) {
         lv_obj_clear_state(av1_checkbox, LV_STATE_DISABLED);
@@ -187,23 +180,18 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
         lv_obj_add_state(av1_checkbox, LV_STATE_DISABLED);
     }
     lv_obj_add_event_cb(av1_checkbox, codec_checkbox_cb, LV_EVENT_VALUE_CHANGED, pane);
-    pref_desc_label(view, locstr("AV1 on this TV presents at 60 Hz even when the overlay shows 120. Use HEVC for 120 fps."), false);
 
     pane->hdr_checkbox = pref_checkbox(view, locstr("HDR"), &app_configuration->hdr, false);
-    lv_obj_set_height(pane->hdr_checkbox, LV_DPX(72));
-    pane->hdr_hint = pref_desc_label(view, NULL, false);
     lv_obj_add_event_cb(pane->hdr_checkbox, hdr_state_update_cb, LV_EVENT_VALUE_CHANGED, pane);
 
     pane->force_10bit_checkbox = pref_checkbox(view, locstr("10-bit SDR"), &app_configuration->force_10bit, false);
-    lv_obj_set_height(pane->force_10bit_checkbox, LV_DPX(72));
-    pane->force_10bit_hint = pref_desc_label(view, NULL, false);
     lv_obj_add_event_cb(pane->force_10bit_checkbox, hdr_state_update_cb, LV_EVENT_VALUE_CHANGED, pane);
     hdr_state_update(pane);
 
     lv_obj_t *audio_row = pref_focus_row(view, locstr("Audio"));
     lv_obj_t *ch_dropdown = pref_dropdown_int(audio_row, pane->surround_entries, pane->surround_entries_len,
                                               &app_configuration->stream.audioConfiguration, NULL);
-    style_row_control(ch_dropdown);
+    pref_style_inline_control(ch_dropdown);
     pref_row_bind_control(audio_row, ch_dropdown);
     lv_obj_add_event_cb(ch_dropdown, module_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
 
@@ -233,26 +221,13 @@ static void hdr_state_update(basic_pane_t *pane) {
     bool hdr_ok = main10_codec && app->ss4s.video_cap.hdr;
     if (hdr_ok) {
         lv_obj_clear_state(pane->hdr_checkbox, LV_STATE_DISABLED);
-        lv_label_set_text(pane->hdr_hint, "");
-        lv_obj_add_flag(pane->hdr_hint, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_state(pane->hdr_checkbox, LV_STATE_DISABLED);
-        lv_obj_clear_flag(pane->hdr_hint, LV_OBJ_FLAG_HIDDEN);
-        if (!app_configuration->hevc && !app_configuration->av1) {
-            lv_label_set_text(pane->hdr_hint, locstr("HDR requires HEVC or AV1."));
-        } else {
-            lv_label_set_text(pane->hdr_hint, locstr("HDR is not supported by the current decoder."));
-        }
     }
     if (main10_codec) {
         lv_obj_clear_state(pane->force_10bit_checkbox, LV_STATE_DISABLED);
-        lv_label_set_text(pane->force_10bit_hint,
-                          locstr("Negotiate Main10 without HDR for less banding in SDR."));
-        lv_obj_clear_flag(pane->force_10bit_hint, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_state(pane->force_10bit_checkbox, LV_STATE_DISABLED);
-        lv_obj_clear_flag(pane->force_10bit_hint, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(pane->force_10bit_hint, locstr("10-bit SDR requires HEVC or AV1."));
     }
 }
 
