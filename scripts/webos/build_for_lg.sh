@@ -97,7 +97,16 @@ export TOOLCHAIN_FILE
 # Keyed by SDK version too: a build dir from the previous SDK keeps its ExternalProject
 # stamps, so mbedtls/opus/sdl2-compat would not be rebuilt with the new compiler.
 export CMAKE_BINARY_DIR="${CMAKE_BINARY_DIR:-build/webos-${SDK_VERSION}}"
-./scripts/webos/easy_build.sh -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+EXTRA_CMAKE_ARGS=()
+if [ -n "${WEBOS_APPINFO_ID:-}" ]; then
+    echo "  WEBOS_APPINFO_ID = ${WEBOS_APPINFO_ID}"
+    EXTRA_CMAKE_ARGS+=("-DWEBOS_APPINFO_ID=${WEBOS_APPINFO_ID}")
+fi
+if [ -n "${WEBOS_APPINFO_TITLE:-}" ]; then
+    echo "  WEBOS_APPINFO_TITLE = ${WEBOS_APPINFO_TITLE}"
+    EXTRA_CMAKE_ARGS+=("-DWEBOS_APPINFO_TITLE=${WEBOS_APPINFO_TITLE}")
+fi
+./scripts/webos/easy_build.sh -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" "${EXTRA_CMAKE_ARGS[@]}"
 
 echo ""
 echo "=== Build complete! ==="
