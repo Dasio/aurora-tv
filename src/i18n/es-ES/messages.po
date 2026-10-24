@@ -339,6 +339,10 @@ msgstr ""
 msgid "Language"
 msgstr "Idioma"
 
+#: src/app/ui/settings/panes/basic.pane.c:209
+msgid "Game grid"
+msgstr "Cuadrícula de juegos"
+
 #: src/app/ui/settings/panes/basic.pane.c:205
 msgid "Your computer may not perform well when using this resolution and framerate."
 msgstr "Es posible que su ordenador no rinda bien usando esta resolución y FPS."

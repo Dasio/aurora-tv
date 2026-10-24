@@ -2,8 +2,10 @@
 
 #include "pref_obj.h"
 #include "ui/settings/settings.controller.h"
+#include "util/bus.h"
 #include "util/i18n.h"
 #include "util/log_overlay.h"
+#include "util/user_event.h"
 #include "lvgl/util/lv_app_utils.h"
 #include "app_settings.h"
 
@@ -228,6 +230,8 @@ static void reset_defaults_confirm_cb(lv_event_t *e) {
             pane->parent->needs_stream_reconnect = true;
         }
         log_overlay_set_enabled(app_configuration->show_logs);
+        /* Back to the default 8 × 3 grid if another layout was selected. */
+        bus_pushevent(USER_LAUNCHER_GRID_CHANGED, NULL, NULL);
     }
     lv_msgbox_close_async(mbox);
 }

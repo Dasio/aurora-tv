@@ -36,6 +36,11 @@ enum {
 #define TOUCHPAD_SPEED_MAX 200
 #define TOUCHPAD_SPEED_DEFAULT 100
 
+/** Home screen game grid rows. Columns follow from it: 3 → 8 × 3, 2 → 5 × 2, 1 → 3 × 1. */
+#define LAUNCHER_GRID_ROWS_MIN 1
+#define LAUNCHER_GRID_ROWS_MAX 3
+#define LAUNCHER_GRID_ROWS_DEFAULT 3
+
 typedef struct app_settings_t {
     STREAM_CONFIGURATION stream;
     int debug_level;
@@ -80,7 +85,7 @@ typedef struct app_settings_t {
     int idr_refresh_interval_ms;
     /**
      * Retired. Future-PTS V-Sync made PAN hitch worse on C5. Always 0 (present
-     * on arrival). Old moonlight.ini keys are ignored.
+     * on arrival). Old render_queue_frames keys are ignored.
      */
     int render_queue_frames;
     bool show_stats_on_start;
@@ -105,6 +110,8 @@ typedef struct app_settings_t {
      * Default on; UI row only shown when Homebrew Channel elevated service is present.
      */
     bool game_mode;
+    /** Home screen game grid rows (LAUNCHER_GRID_ROWS_MIN..MAX). Fewer rows mean larger covers. */
+    int launcher_grid_rows;
     char *conf_dir;
     char *ini_path;
     char *condb_path;
@@ -121,7 +128,9 @@ typedef struct audio_config_entry_t {
 extern const audio_config_entry_t audio_configs[];
 extern const size_t audio_config_len;
 
-#define CONF_NAME_MOONLIGHT "moonlight.ini"
+#define CONF_NAME_SETTINGS "aurora.ini"
+/** Settings file name before the Aurora rename; settings_read() moves it to CONF_NAME_SETTINGS once. */
+#define CONF_NAME_LEGACY_SETTINGS "moonlight.ini"
 #define CONF_NAME_HOSTS "hosts.ini"
 
 #define RES_MERGE(w, h) (((w) & 0xFFFF) << 16 | ((h) & 0xFFFF))
@@ -139,7 +148,7 @@ extern const size_t audio_config_len;
 
 void settings_initialize(app_settings_t *config, char *conf_dir);
 
-/** Re-apply built-in defaults and rewrite moonlight.ini. Keeps pairing keys. */
+/** Re-apply built-in defaults and rewrite aurora.ini. Keeps pairing keys. */
 void settings_restore_defaults(app_settings_t *config);
 
 bool settings_read(app_settings_t *config);

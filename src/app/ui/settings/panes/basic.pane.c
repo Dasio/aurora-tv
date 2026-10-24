@@ -7,7 +7,9 @@
 #include "av_pane.h"
 #include "ui/settings/settings.controller.h"
 
+#include "util/bus.h"
 #include "util/i18n.h"
+#include "util/user_event.h"
 #include "ss4s.h"
 #include "ss4s_modules.h"
 
@@ -16,8 +18,8 @@
 #include <string.h>
 
 /**
- * Compact stream settings (punktfunk FocusRow style): one labelled control per row.
- * Advanced host/input/experimental stay in their panes.
+ * Compact stream settings (punktfunk FocusRow style): one labelled control per row,
+ * plus the home screen grid layout. Advanced host/input/experimental stay in their panes.
  */
 typedef struct {
     lv_fragment_t base;
@@ -57,11 +59,20 @@ static void codec_checkbox_cb(lv_event_t *e);
 
 static void module_changed_cb(lv_event_t *e);
 
+static void launcher_grid_changed_cb(lv_event_t *e);
+
 const lv_fragment_class_t settings_pane_basic_cls = {
     .constructor_cb = pane_ctor,
     .destructor_cb = pane_dtor,
     .create_obj_cb = create_obj,
     .instance_size = sizeof(basic_pane_t),
+};
+
+/* Home screen layout as columns × rows; the label needs no translation. */
+static const pref_dropdown_int_entry_t launcher_grid_entries[] = {
+    {"8 × 3", 3, true},
+    {"5 × 2", 2, false},
+    {"3 × 1", 1, false},
 };
 
 #define BITRATE_STEP 1000
@@ -195,6 +206,14 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     pref_row_bind_control(audio_row, ch_dropdown);
     lv_obj_add_event_cb(ch_dropdown, module_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
 
+    lv_obj_t *grid_row = pref_focus_row(view, locstr("Game grid"));
+    lv_obj_t *grid_dropdown = pref_dropdown_int(grid_row, launcher_grid_entries,
+                                                sizeof(launcher_grid_entries) / sizeof(launcher_grid_entries[0]),
+                                                &app_configuration->launcher_grid_rows, NULL);
+    pref_style_inline_control(grid_dropdown);
+    pref_row_bind_control(grid_row, grid_dropdown);
+    lv_obj_add_event_cb(grid_dropdown, launcher_grid_changed_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
     return view;
 }
 
@@ -254,4 +273,10 @@ static void module_changed_cb(lv_event_t *e) {
     settings_controller_t *parent = pane->parent;
     parent->needs_stream_reconnect = true;
     hdr_state_update(pane);
+}
+
+static void launcher_grid_changed_cb(lv_event_t *e) {
+    (void) e;
+    /* The apps fragment rebuilds its grid when the row count no longer matches. */
+    bus_pushevent(USER_LAUNCHER_GRID_CHANGED, NULL, NULL);
 }

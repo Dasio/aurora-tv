@@ -1,12 +1,14 @@
 #include "app_settings.h"
 #include "config.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
 #include <ini.h>
 
+#include "logging.h"
 #include "util/ini_ext.h"
 #include "util/nullable.h"
 #include "util/path.h"
@@ -27,6 +29,8 @@ static const char *indexed_setting_serialize(const char *const values[], size_t 
 static int indexed_setting_parse(const char *value, const char *const values[], size_t count, int fallback);
 
 static int settings_parse(app_settings_t *config, const char *section, const char *name, const char *value);
+
+static void settings_migrate_legacy_ini(const app_settings_t *config);
 
 static void set_string(char **field, const char *value);
 
@@ -190,6 +194,7 @@ void settings_initialize(app_settings_t *config, char *conf_dir) {
     config->auto_adjust_bitrate = false;
     config->abr_mode = 0;
     config->game_mode = true;
+    config->launcher_grid_rows = LAUNCHER_GRID_ROWS_DEFAULT;
 #if defined(TARGET_WEBOS)
     /* Home/Win need KEYS_HOME; default capture on so Meta reaches the host too. */
     config->syskey_capture = true;
@@ -199,7 +204,7 @@ void settings_initialize(app_settings_t *config, char *conf_dir) {
 #endif
 
     config->conf_dir = conf_dir;
-    config->ini_path = path_join(conf_dir, CONF_NAME_MOONLIGHT);
+    config->ini_path = path_join(conf_dir, CONF_NAME_SETTINGS);
     config->condb_path = path_join(conf_dir, "gamecontrollerdb.txt");
     config->key_dir = path_join(conf_dir, "key");
 }
@@ -213,6 +218,7 @@ void settings_restore_defaults(app_settings_t *config) {
 }
 
 bool settings_read(app_settings_t *config) {
+    settings_migrate_legacy_ini(config);
     int ret = ini_parse(config->ini_path, (ini_handler) settings_parse, config);
     if (ret == 0) {
         settings_reconcile_refresh_rate(config);
@@ -239,6 +245,7 @@ bool settings_save(app_settings_t *config) {
     ini_write_string(fp, "language", config->language);
     ini_write_bool(fp, "fullscreen", config->fullscreen);
     ini_write_int(fp, "debug_level", config->debug_level);
+    ini_write_int(fp, "launcher_grid_rows", config->launcher_grid_rows);
 
     ini_write_section(fp, "streaming");
     ini_write_int(fp, "width", config->stream.width);
@@ -545,6 +552,12 @@ static int settings_parse(app_settings_t *config, const char *section, const cha
 #endif
     } else if (INI_NAME_MATCH("debug_level")) {
         set_int(&config->debug_level, value);
+    } else if (INI_NAME_MATCH("launcher_grid_rows")) {
+        set_int(&config->launcher_grid_rows, value);
+        if (config->launcher_grid_rows < LAUNCHER_GRID_ROWS_MIN ||
+            config->launcher_grid_rows > LAUNCHER_GRID_ROWS_MAX) {
+            config->launcher_grid_rows = LAUNCHER_GRID_ROWS_DEFAULT;
+        }
     } else if (INI_FULL_MATCH("window", "x")) {
         set_int(&config->window_state.x, value);
     } else if (INI_FULL_MATCH("window", "y")) {
@@ -555,6 +568,32 @@ static int settings_parse(app_settings_t *config, const char *section, const cha
         set_int(&config->window_state.h, value);
     }
     return 1;
+}
+
+/* Builds before the Aurora rename kept settings in moonlight.ini. Move that file to
+ * aurora.ini the first time, so an upgrade keeps them. Once aurora.ini exists a
+ * leftover moonlight.ini is never read again. */
+static void settings_migrate_legacy_ini(const app_settings_t *config) {
+    if (config->conf_dir == NULL || config->ini_path == NULL) {
+        return;
+    }
+    FILE *current = fopen(config->ini_path, "r");
+    if (current != NULL) {
+        fclose(current);
+        return;
+    }
+    if (errno != ENOENT) {
+        /* aurora.ini may exist but be unreadable; rename() would overwrite it. */
+        return;
+    }
+    char *legacy_path = path_join(config->conf_dir, CONF_NAME_LEGACY_SETTINGS);
+    if (rename(legacy_path, config->ini_path) == 0) {
+        commons_log_info("Settings", "Moved %s to %s", legacy_path, config->ini_path);
+    } else if (errno != ENOENT) {
+        commons_log_warn("Settings", "Failed to move %s to %s: %s", legacy_path, config->ini_path,
+                         strerror(errno));
+    }
+    free(legacy_path);
 }
 
 static void set_string(char **field, const char *value) {

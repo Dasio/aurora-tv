@@ -85,6 +85,10 @@ Cross-cutting mechanics worth knowing before touching anything:
   the RTP receive thread. Anything that blocks in the feed path stops the socket from
   being drained. Audio deliberately does *not* set it on webOS, because the NDL Opus 5.1
   transcode is expensive enough to starve reception (issue #66).
+- **Game grid** (`launcher/apps.controller.c`): `lv_gridview` cannot change its column count
+  in place (`clear_rows()` skips the last row and the focused item, and item views keep the
+  size they were created with). The "Game grid" setting (`launcher_grid_rows`) therefore
+  recreates the apps fragment's view through `USER_LAUNCHER_GRID_CHANGED`.
 
 ## Settings — the part that will bite you
 
@@ -98,7 +102,13 @@ global `app_configuration` aliases `&app->settings`.
 Stream (`basic.pane.c`), Input, Host and Experimental. A pane that is compiled but not
 in `entries[]` is dead UI; a setting placed there is invisible with no build error.
 This fork already lost `video.pane.c` and `audio.pane.c` to exactly that (deleted).
-New or experimental settings belong in `experimental.pane.c`.
+Experimental settings belong in `experimental.pane.c`. Settings users should find right
+away go in `basic.pane.c`: the launcher's settings overlay shows it inline as the main
+list, and Input/Host/Experimental only as submenu rows below it.
+
+Settings are stored in `aurora.ini` in the config dir (`CONF_NAME_SETTINGS`). Builds before
+the rename used `moonlight.ini`; `settings_read()` moves it to `aurora.ini` once, if
+`aurora.ini` does not exist yet.
 
 Retired INI keys are collected in a shared "legacy keys ignored" branch in
 `app_settings.c` so old config files don't warn — add to it rather than dropping the key.
