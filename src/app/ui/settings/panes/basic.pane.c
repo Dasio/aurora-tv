@@ -7,9 +7,7 @@
 #include "av_pane.h"
 #include "ui/settings/settings.controller.h"
 
-#include "util/bus.h"
 #include "util/i18n.h"
-#include "util/user_event.h"
 #include "ss4s.h"
 #include "ss4s_modules.h"
 
@@ -59,8 +57,6 @@ static void codec_checkbox_cb(lv_event_t *e);
 
 static void module_changed_cb(lv_event_t *e);
 
-static void launcher_grid_changed_cb(lv_event_t *e);
-
 const lv_fragment_class_t settings_pane_basic_cls = {
     .constructor_cb = pane_ctor,
     .destructor_cb = pane_dtor,
@@ -68,7 +64,8 @@ const lv_fragment_class_t settings_pane_basic_cls = {
     .instance_size = sizeof(basic_pane_t),
 };
 
-/* Home screen layout as columns × rows; the label needs no translation. */
+/* Home screen layout as columns × rows (columns come from apps_grid_columns()); the
+ * label needs no translation. The grid is rebuilt when Settings closes. */
 static const pref_dropdown_int_entry_t launcher_grid_entries[] = {
     {"8 × 3", 3, true},
     {"5 × 2", 2, false},
@@ -212,7 +209,6 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
                                                 &app_configuration->launcher_grid_rows, NULL);
     pref_style_inline_control(grid_dropdown);
     pref_row_bind_control(grid_row, grid_dropdown);
-    lv_obj_add_event_cb(grid_dropdown, launcher_grid_changed_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
     return view;
 }
@@ -273,10 +269,4 @@ static void module_changed_cb(lv_event_t *e) {
     settings_controller_t *parent = pane->parent;
     parent->needs_stream_reconnect = true;
     hdr_state_update(pane);
-}
-
-static void launcher_grid_changed_cb(lv_event_t *e) {
-    (void) e;
-    /* The apps fragment rebuilds its grid when the row count no longer matches. */
-    bus_pushevent(USER_LAUNCHER_GRID_CHANGED, NULL, NULL);
 }

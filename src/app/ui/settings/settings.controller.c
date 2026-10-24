@@ -9,6 +9,7 @@
 #include "lvgl/ext/lv_child_group.h"
 #include "lvgl/util/lv_app_utils.h"
 
+#include "util/bus.h"
 #include "util/user_event.h"
 #include "util/font.h"
 #include "util/i18n.h"
@@ -268,6 +269,8 @@ static void on_destroy_view(lv_fragment_t *self, lv_obj_t *view) {
     }
     settings_save(app_configuration);
     settings_apply_locale_if_needed(controller);
+    /* Rebuilds the home grid once, and only if Game grid (or a reset) changed its layout. */
+    bus_pushevent(USER_LAUNCHER_GRID_CHANGED, NULL, NULL);
 
     if (controller->launcher_host) {
         settings_close_pane_popup(controller);

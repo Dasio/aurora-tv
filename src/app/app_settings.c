@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <ini.h>
 
@@ -574,16 +575,8 @@ static int settings_parse(app_settings_t *config, const char *section, const cha
  * aurora.ini the first time, so an upgrade keeps them. Once aurora.ini exists a
  * leftover moonlight.ini is never read again. */
 static void settings_migrate_legacy_ini(const app_settings_t *config) {
-    if (config->conf_dir == NULL || config->ini_path == NULL) {
-        return;
-    }
-    FILE *current = fopen(config->ini_path, "r");
-    if (current != NULL) {
-        fclose(current);
-        return;
-    }
-    if (errno != ENOENT) {
-        /* aurora.ini may exist but be unreadable; rename() would overwrite it. */
+    /* Only when aurora.ini is known to be missing: rename() would overwrite it. */
+    if (access(config->ini_path, F_OK) == 0 || errno != ENOENT) {
         return;
     }
     char *legacy_path = path_join(config->conf_dir, CONF_NAME_LEGACY_SETTINGS);

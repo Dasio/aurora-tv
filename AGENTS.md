@@ -86,9 +86,10 @@ Cross-cutting mechanics worth knowing before touching anything:
   being drained. Audio deliberately does *not* set it on webOS, because the NDL Opus 5.1
   transcode is expensive enough to starve reception (issue #66).
 - **Game grid** (`launcher/apps.controller.c`): `lv_gridview` cannot change its column count
-  in place (`clear_rows()` skips the last row and the focused item, and item views keep the
-  size they were created with). The "Game grid" setting (`launcher_grid_rows`) therefore
-  recreates the apps fragment's view through `USER_LAUNCHER_GRID_CHANGED`.
+  in place (`clear_rows()` skips the last row and the focused item), and `appitem_view()`
+  sizes tiles only once. So when the "Game grid" setting (`launcher_grid_rows`) changes,
+  Settings sends `USER_LAUNCHER_GRID_CHANGED` on close and the apps fragment recreates
+  its view.
 
 ## Settings — the part that will bite you
 

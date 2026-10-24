@@ -341,9 +341,17 @@ static bool coverloader_filecache_get(coverloader_req_t *req) {
     const double scale_h = tex_h / (double) sh;
     /* Grid tiles: letterbox (contain). Hero background: crop to fill the viewport. */
     const bool cover_fill = !coverloader_is_appitem(req->target);
-    const double scale = cover_fill
-                                 ? (scale_w > scale_h ? scale_w : scale_h)
-                                 : (scale_w < scale_h ? scale_w : scale_h);
+    double scale = cover_fill
+                           ? (scale_w > scale_h ? scale_w : scale_h)
+                           : (scale_w < scale_h ? scale_w : scale_h);
+    if (!cover_fill && scale > 1.0) {
+        /* Large tiles (5 × 2, 3 × 1 grids): upscaling past the source adds no detail, only
+         * texture memory (3 × 1 would be 1184 × 1578 for a 600 × 800 cover). Shrink the
+         * canvas to source size; LVGL still maps it to disp_w × disp_h. */
+        tex_w = (int) (tex_w / scale + 0.5);
+        tex_h = (int) (tex_h / scale + 0.5);
+        scale = 1.0;
+    }
     int fit_w = (int) (sw * scale + 0.5);
     int fit_h = (int) (sh * scale + 0.5);
     if (fit_w < 1) {

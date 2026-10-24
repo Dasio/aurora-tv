@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "unity.h"
 #include "app_settings.h"
+#include "util/path.h"
 #include "uuidstr.h"
 
 #ifndef FIXTURES_PATH_PREFIX
@@ -208,40 +209,6 @@ void testIdrRefreshIntervalMsDefaultAndClamp() {
     settings.ini_path = ini_backup;
 }
 
-void testLauncherGridRowsDefaultRoundTripAndRange() {
-    TEST_ASSERT_EQUAL_INT(LAUNCHER_GRID_ROWS_DEFAULT, settings.launcher_grid_rows);
-
-    settings.launcher_grid_rows = 1;
-    char *ini_backup = settings.ini_path;
-    settings.ini_path = "settings_grid_tmp.ini";
-    TEST_ASSERT_TRUE(settings_save(&settings));
-    settings.launcher_grid_rows = LAUNCHER_GRID_ROWS_DEFAULT;
-    TEST_ASSERT_TRUE(settings_read(&settings));
-    TEST_ASSERT_EQUAL_INT(1, settings.launcher_grid_rows);
-    settings.ini_path = ini_backup;
-    remove("settings_grid_tmp.ini");
-
-    /* A hand-edited value outside 1..3 falls back to the default 8 × 3 layout. */
-    const char *const out_of_range[] = {"0", "4", "-2", "abc"};
-    for (size_t i = 0; i < sizeof(out_of_range) / sizeof(out_of_range[0]); i++) {
-        FILE *fp = fopen("settings_grid_range_tmp.ini", "w");
-        TEST_ASSERT_NOT_NULL(fp);
-        fprintf(fp, "launcher_grid_rows = %s\n", out_of_range[i]);
-        fclose(fp);
-
-        app_settings_t loaded;
-        settings_initialize(&loaded, settings.conf_dir);
-        loaded.launcher_grid_rows = 2;
-        char *loaded_ini_backup = loaded.ini_path;
-        loaded.ini_path = "settings_grid_range_tmp.ini";
-        TEST_ASSERT_TRUE(settings_read(&loaded));
-        loaded.ini_path = loaded_ini_backup;
-        TEST_ASSERT_EQUAL_INT(LAUNCHER_GRID_ROWS_DEFAULT, loaded.launcher_grid_rows);
-        settings_clear(&loaded);
-    }
-    remove("settings_grid_range_tmp.ini");
-}
-
 static void write_file(const char *path, const char *content) {
     FILE *fp = fopen(path, "w");
     TEST_ASSERT_NOT_NULL(fp);
@@ -249,45 +216,65 @@ static void write_file(const char *path, const char *content) {
     fclose(fp);
 }
 
-static bool file_exists(const char *path) {
-    FILE *fp = fopen(path, "r");
-    if (fp == NULL) {
-        return false;
+void testLauncherGridRowsDefaultRoundTripAndRange() {
+    TEST_ASSERT_EQUAL_INT(LAUNCHER_GRID_ROWS_DEFAULT, settings.launcher_grid_rows);
+
+    char *ini_backup = settings.ini_path;
+    settings.ini_path = "settings_grid_tmp.ini";
+    settings.launcher_grid_rows = 1;
+    TEST_ASSERT_TRUE(settings_save(&settings));
+    settings.launcher_grid_rows = LAUNCHER_GRID_ROWS_DEFAULT;
+    TEST_ASSERT_TRUE(settings_read(&settings));
+    TEST_ASSERT_EQUAL_INT(1, settings.launcher_grid_rows);
+
+    /* A hand-edited value outside 1..3 falls back to the default 8 × 3 layout. */
+    const char *const out_of_range[] = {"0", "4", "-2", "abc"};
+    for (size_t i = 0; i < sizeof(out_of_range) / sizeof(out_of_range[0]); i++) {
+        char line[64];
+        snprintf(line, sizeof(line), "launcher_grid_rows = %s\n", out_of_range[i]);
+        write_file(settings.ini_path, line);
+        settings.launcher_grid_rows = 2;
+        TEST_ASSERT_TRUE(settings_read(&settings));
+        TEST_ASSERT_EQUAL_INT(LAUNCHER_GRID_ROWS_DEFAULT, settings.launcher_grid_rows);
     }
-    fclose(fp);
-    return true;
+    remove(settings.ini_path);
+    settings.ini_path = ini_backup;
+}
+
+/* Creates the (per-test) config dir holding a moonlight.ini; returns its path. */
+static char *make_legacy_ini(const char *content) {
+    TEST_ASSERT_EQUAL_INT(0, mkdir(settings.conf_dir, 0700));
+    char *legacy = path_join(settings.conf_dir, CONF_NAME_LEGACY_SETTINGS);
+    write_file(legacy, content);
+    return legacy;
 }
 
 void testMigratesLegacyMoonlightIni() {
-    TEST_ASSERT_EQUAL_INT(0, mkdir(settings.conf_dir, 0700));
-    char legacy[256];
-    snprintf(legacy, sizeof(legacy), "%s/%s", settings.conf_dir, CONF_NAME_LEGACY_SETTINGS);
-    write_file(legacy, "[input]\ntouchpad_speed = 150\n");
+    char *legacy = make_legacy_ini("[input]\ntouchpad_speed = 150\n");
 
     TEST_ASSERT_TRUE(settings_read(&settings));
     TEST_ASSERT_EQUAL_INT(150, settings.touchpad_speed);
     /* Moved, not copied: later starts only ever read aurora.ini. */
-    TEST_ASSERT_TRUE(file_exists(settings.ini_path));
-    TEST_ASSERT_FALSE(file_exists(legacy));
+    TEST_ASSERT_EQUAL_INT(0, access(settings.ini_path, F_OK));
+    TEST_ASSERT_NOT_EQUAL(0, access(legacy, F_OK));
 
     remove(settings.ini_path);
     rmdir(settings.conf_dir);
+    free(legacy);
 }
 
 void testAuroraIniWinsOverLegacyMoonlightIni() {
-    TEST_ASSERT_EQUAL_INT(0, mkdir(settings.conf_dir, 0700));
-    char legacy[256];
-    snprintf(legacy, sizeof(legacy), "%s/%s", settings.conf_dir, CONF_NAME_LEGACY_SETTINGS);
-    write_file(legacy, "[input]\ntouchpad_speed = 150\n");
+    char *legacy = make_legacy_ini("[input]\ntouchpad_speed = 150\n");
     write_file(settings.ini_path, "[input]\ntouchpad_speed = 60\n");
 
     TEST_ASSERT_TRUE(settings_read(&settings));
     TEST_ASSERT_EQUAL_INT(60, settings.touchpad_speed);
-    TEST_ASSERT_TRUE(file_exists(legacy));
+    TEST_ASSERT_EQUAL_INT(0, access(legacy, F_OK));
 
     remove(legacy);
     remove(settings.ini_path);
     rmdir(settings.conf_dir);
+    free(legacy);
 }
 
 int main() {

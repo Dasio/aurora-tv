@@ -41,8 +41,6 @@ typedef struct {
     lv_obj_t *quit_progress;
 
     appitem_styles_t appitem_style;
-    /** Rows the grid was built for (app_configuration->launcher_grid_rows at the time). */
-    int grid_rows;
     int col_count;
     lv_coord_t col_width, col_height;
     int focus_backup;

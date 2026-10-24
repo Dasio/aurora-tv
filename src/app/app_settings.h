@@ -36,7 +36,7 @@ enum {
 #define TOUCHPAD_SPEED_MAX 200
 #define TOUCHPAD_SPEED_DEFAULT 100
 
-/** Home screen game grid rows. Columns follow from it: 3 → 8 × 3, 2 → 5 × 2, 1 → 3 × 1. */
+/** Home screen game grid rows; the column count comes from apps_grid_columns(). */
 #define LAUNCHER_GRID_ROWS_MIN 1
 #define LAUNCHER_GRID_ROWS_MAX 3
 #define LAUNCHER_GRID_ROWS_DEFAULT 3
