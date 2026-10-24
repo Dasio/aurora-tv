@@ -103,6 +103,68 @@ New or experimental settings belong in `experimental.pane.c`.
 Retired INI keys are collected in a shared "legacy keys ignored" branch in
 `app_settings.c` so old config files don't warn — add to it rather than dropping the key.
 
+## Translations (i18n)
+
+Two backends behind `locstr()` (`util/i18n.h`): desktop uses gettext
+(`platform/common/i18n_gettext.c`, `.mo` built by `msgfmt`); webOS uses libwebosi18n's
+`ResBundle` (`platform/webos/i18n_webos.c`) on `cstrings.json` files that
+`scripts/webos/po2json.awk` generates at package time. po2json skips empty `msgstr`, so an
+untranslated string just falls back to English.
+
+**A language only ships when three names agree**: the `src/i18n/<code>/` directory, its
+entry in `I18N_LOCALES` (root `CMakeLists.txt`), and its `i18n_locales[]` code in
+`i18n_common.c`. Upstream moonlight-tv never showed Spanish with "System Language" because
+`es-ES` was missing from `I18N_LOCALES` and the entry was `es`. This fork fixed that in
+v1.2.9 (`d9ae5edc`). `PackageWebOS.cmake` installs `es-ES` as `resources/es/ES/cstrings.json`.
+
+Locale resolution on webOS (verified against webosose/libwebosi18n
+`ResBundle::loadAllTranslations`):
+
+- `resBundle_createWithRootPath(locale, "cstrings.json", root)` appends `/resources` itself
+  and merges `<root>/resources/<lang>/` and `<root>/resources/<lang>/<region>/`.
+- `app_init_locale` (`app_webos.c`) reads `localeInfo.locales.UI` from
+  `com.webos.settingsservice/getSystemSettings`, then falls back to `SDL_GetPreferredLocales`
+  and then `$LANG`. Every tag goes through `i18n_entry()`: an exact match wins, otherwise
+  any `xx-YY` entry with the same language does, so `es-MX` loads `es-ES`.
+- `bundle_is_translated()` rejects a catalog unless `[Localized Language]` or `Cancel` is
+  translated. Keep both translated in every `.po`. `[Localized Language]` is the language's
+  own name (`Español (España)`), not a literal translation of the words.
+
+**Extraction traps** — xgettext only picks up `locstr("...")` and `translatable("...")` with
+a literal argument:
+
+- A literal that reaches `locstr(var)` through a variable (option tables, button arrays for
+  `lv_msgbox_create_i18n`) must be wrapped in `translatable()` where it is defined.
+  Otherwise it is never extracted and stays English with no build error.
+- `streaming_error()` and `app_fatal_error()` translate their format and title internally.
+  Pass `translatable("...")` at the call site. `streaming_error(s, code, "")` clears the
+  message and must not reach `locstr` (`gettext("")` returns the `.po` header).
+- Translated format strings must keep the same conversion specifiers in the same order.
+- Debug-only text (log overlay, compact stats tokens like `RTT`/`FD`, soft-keyboard key caps)
+  is intentionally left in English.
+
+**Runtime costs**: on webOS `resBundle_getLocString` returns a fresh `strdup` that
+`locstr()` never frees. Keep `locstr` out of per-frame paths, and translate once per
+session, like `session_audio.c` does for the channel label. The detailed stats panel
+already leaks a few bytes per ~1 Hz refresh (`locstr("total")`, `locstr("not available")`).
+`locstr` is called from worker threads (connection callbacks, session worker). Both
+backends do a read-only lookup there, so that is safe.
+
+Updating catalogs:
+
+```bash
+cmake --build build --target i18n-update-pot   # xgettext over src/, needs gettext
+msgmerge --update src/i18n/<lang>/messages.po src/i18n/messages.pot
+```
+
+The `i18n-merge-po` target only merges `ja`, so don't rely on it. Until 2026-10 the `.pot`
+was stale and still carried strings from the deleted video/audio panes. Since then `es-ES`
+is complete (209/209). The rest only partly cover the current `.pot` (pt-BR 105, fr 87,
+zh-CN 80, others fewer; ko/uk/zh-TW 0) and are not merged against it yet.
+Spanish (Spain) conventions: formal *usted*; "transmisión" for streaming; "mando" for
+gamepad and "mando a distancia" for the remote; "ratón"; "ordenador"; `«»` quotes; "host"
+left as is. Long Spanish labels can overflow TV rows, so check them on the device.
+
 ## 5.1 audio (C5 + eARC) — verified, do not invert
 
 Three conventions exist: GFE native, Moonlight WAVE (`FL FR C LFE RL RR`), and

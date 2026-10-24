@@ -9,6 +9,7 @@
 #include "stream/session_priv.h"
 #include "logging.h"
 #include "config.h"
+#include "util/i18n.h"
 
 #define SAMPLES_PER_FRAME  240
 
@@ -77,7 +78,7 @@ static int aud_init(int audioConfiguration, const POPUS_MULTISTREAM_CONFIGURATIO
     audio_stream_info.format = SS4S_AudioCodecName(codec);
     switch (audioConfiguration) {
         case AUDIO_CONFIGURATION_STEREO:
-            audio_stream_info.channels = "Stereo";
+            audio_stream_info.channels = locstr("Stereo");
             break;
         case AUDIO_CONFIGURATION_51_SURROUND:
             audio_stream_info.channels = "5.1ch";
@@ -86,7 +87,7 @@ static int aud_init(int audioConfiguration, const POPUS_MULTISTREAM_CONFIGURATIO
             audio_stream_info.channels = "7.1ch";
             break;
         default:
-            audio_stream_info.channels = "Unknown";
+            audio_stream_info.channels = locstr("Unknown");
             break;
     }
     info.codec = codec;
