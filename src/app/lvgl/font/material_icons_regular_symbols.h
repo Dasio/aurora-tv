@@ -11,7 +11,6 @@
 #define MAT_SYMBOL_KEYBOARD_ARROW_LEFT "\xee\x8c\x94"
 #define MAT_SYMBOL_KEYBOARD_ARROW_UP "\xee\x8c\x96"
 #define MAT_SYMBOL_LOCK "\xee\xa2\x97"
-#define MAT_SYMBOL_MENU "\xee\x97\x92"
 #define MAT_SYMBOL_ONDEMAND_VIDEO "\xee\x98\xba"
 #define MAT_SYMBOL_PLAY_ARROW "\xee\x80\xb7"
 #define MAT_SYMBOL_PUSH_PIN "\xef\x84\x8d"
