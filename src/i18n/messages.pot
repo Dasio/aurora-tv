@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-25 18:45+0900\n"
+"POT-Creation-Date: 2026-10-24 12:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,76 +17,239 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/app/app.c:87
+#: src/app/app.c:107
 msgid "[Localized Language]"
 msgstr ""
 
-#: src/app/app.c:277 src/app/ui/launcher/add.dialog.c:42
-#: src/app/ui/launcher/apps.controller.c:732
-#: src/app/ui/launcher/server.context_menu.c:89
+#: src/app/app.c:319 src/app/ui/launcher/add.dialog.c:42
+#: src/app/ui/launcher/apps.controller.c:875
+#: src/app/ui/launcher/server.context_menu.c:101
+#: src/app/ui/launcher/server.context_menu.c:188
+#: src/app/ui/settings/panes/experimental.pane.c:212
+#: src/app/ui/settings/panes/pref_fps.c:144
+#: src/app/ui/settings/panes/pref_res.c:174
 msgid "Cancel"
 msgstr ""
 
-#: src/app/app.c:277 src/app/ui/launcher/add.dialog.c:42
-#: src/app/ui/launcher/apps.controller.c:656
-#: src/app/ui/launcher/apps.controller.c:768
-#: src/app/ui/launcher/launcher.controller.c:467
-#: src/app/ui/launcher/launcher.controller.c:482
+#: src/app/app.c:319 src/app/ui/launcher/add.dialog.c:42
+#: src/app/ui/launcher/apps.controller.c:799
+#: src/app/ui/launcher/apps.controller.c:911
+#: src/app/ui/launcher/launcher.controller.c:629
+#: src/app/ui/launcher/launcher.controller.c:644
 #: src/app/ui/launcher/pair.dialog.c:54
-#: src/app/ui/launcher/server.context_menu.c:129 src/app/ui/root.c:339
+#: src/app/ui/launcher/server.context_menu.c:143 src/app/ui/root.c:403
+#: src/app/ui/settings/panes/pref_fps.c:144
+#: src/app/ui/settings/panes/pref_res.c:174
 msgid "OK"
 msgstr ""
 
-#: src/app/app.c:278
+#: src/app/app.c:320
 msgid "Quit Aurora?"
 msgstr ""
 
-#: src/app/app_settings.c:33
+#: src/app/app_settings.c:133 src/app/stream/audio/session_audio.c:81
 msgid "Stereo"
 msgstr ""
 
-#: src/app/app_settings.c:34
+#: src/app/app_settings.c:134
 msgid "5.1 Surround"
 msgstr ""
 
-#: src/app/app_settings.c:35
+#: src/app/app_settings.c:135
 msgid "7.1 Surround"
+msgstr ""
+
+#: src/app/backend/backend_gs.c:22
+msgid "Failed to generate client info"
+msgstr ""
+
+#: src/app/backend/backend_gs.c:23
+#, c-format
+msgid ""
+"Please turn off and unplug to completely restart the TV.\n"
+"\n"
+"Details: %s"
+msgstr ""
+
+#: src/app/backend/backend_gs.c:33
+msgid "Failed to initialize client"
+msgstr ""
+
+#: src/app/backend/backend_gs.c:34
+#, c-format
+msgid ""
+"Please try uninstalling and reinstalling the app.\n"
+"\n"
+"Details: %s"
 msgstr ""
 
 #: src/app/platform/common/i18n_common.c:6
 msgid "System Language"
 msgstr ""
 
-#: src/app/stream/connection/session_connnection.c:37
+#: src/app/stream/audio/session_audio.c:90
+#: src/app/ui/launcher/server.context_menu.c:151
+msgid "Unknown"
+msgstr ""
+
+#: src/app/stream/connection/session_connnection.c:20
+#, c-format
+msgid "Connection terminated, errorCode = 0x%x"
+msgstr ""
+
+#: src/app/stream/connection/session_connnection.c:40
 msgid "Unstable connection."
 msgstr ""
 
-#: src/app/ui/help/help.dialog.c:15 src/app/ui/launcher/launcher.view.c:113
+#: src/app/stream/connection/session_connnection.c:55
+#, c-format
+msgid "Connection failed at stage %d (%s), errorCode = %d (%s)"
+msgstr ""
+
+#: src/app/stream/session.c:133
+msgid "Video pipeline stalled"
+msgstr ""
+
+#: src/app/stream/session.c:136
+msgid "Network error happened"
+msgstr ""
+
+#: src/app/stream/session.c:139
+msgid "Decoder reported error"
+msgstr ""
+
+#: src/app/stream/session.c:142
+msgid "Error occurred while in streaming"
+msgstr ""
+
+#: src/app/stream/session_worker.c:103
+#, c-format
+msgid "Failed to launch session: %s (code %d)"
+msgstr ""
+
+#: src/app/stream/session_worker.c:105
+#, c-format
+msgid "Failed to launch session: gamestream returned %d"
+msgstr ""
+
+#: src/app/stream/session_worker.c:138
+msgid "Unsupported video codec."
+msgstr ""
+
+#: src/app/stream/session_worker.c:141
+msgid "Failed to open video decoder."
+msgstr ""
+
+#: src/app/stream/session_worker.c:144
+msgid "Unsupported audio codec."
+msgstr ""
+
+#: src/app/stream/session_worker.c:147
+msgid "Failed to open audio backend."
+msgstr ""
+
+#: src/app/stream/session_worker.c:152
+#, c-format
+msgid "Failed to start connection: Limelight returned %d (%s)"
+msgstr ""
+
+#: src/app/stream/session_worker_embedded.c:48
+#, c-format
+msgid "Failed to start embedded session: %s"
+msgstr ""
+
+#: src/app/stream/session_worker_embedded.c:78
+#, c-format
+msgid ""
+"moonlight-embedded exited with signal %d.\n"
+"Last output: %s"
+msgstr ""
+
+#: src/app/stream/session_worker_embedded.c:81
+#, c-format
+msgid ""
+"moonlight-embedded exited with code %d.\n"
+"Last output: %s"
+msgstr ""
+
+#: src/app/stream/session_worker_embedded.c:84
+#, c-format
+msgid ""
+"moonlight-embedded exited with unknown status %d.\n"
+"Last output: %s"
+msgstr ""
+
+#: src/app/ui/fatal_error.c:39
+msgid "Quit"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:30
 msgid "Help"
 msgstr ""
 
-#: src/app/ui/help/help.dialog.c:36
+#: src/app/ui/help/help.dialog.c:50
+msgid "About"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:52
+msgid "Product"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:52
+msgid "NVIDIA GameStream Client, for LG webOS TV."
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:53
+msgid "Version"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:54
+msgid "Video decoder"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:55
+msgid "Audio backend"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:58
+msgid "System"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:66
+msgid "Screen resolution"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:76
+msgid "Refresh rate"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:81
+#: src/app/ui/settings/settings.controller.c:39
 msgid "Input"
 msgstr ""
 
-#: src/app/ui/help/help.dialog.c:37
+#: src/app/ui/help/help.dialog.c:82
 msgid "Gamepad hotkeys"
 msgstr ""
 
-#: src/app/ui/help/help.dialog.c:39
+#: src/app/ui/help/help.dialog.c:84
 msgid "Remote controller keys"
 msgstr ""
 
-#: src/app/ui/help/help.dialog.c:41
+#: src/app/ui/help/help.dialog.c:86
 msgid "More help"
 msgstr ""
 
-#: src/app/ui/help/help.dialog.c:42
+#: src/app/ui/help/help.dialog.c:87
 msgid "Open moonlight-tv Wiki"
 msgstr ""
 
-#: src/app/ui/help/help.dialog.c:44
+#: src/app/ui/help/help.dialog.c:89
 msgid "Open moonlight-stream Wiki"
+msgstr ""
+
+#: src/app/ui/help/help.dialog.c:130
+msgid "Not available"
 msgstr ""
 
 #: src/app/ui/launcher/add.dialog.c:58
@@ -105,51 +268,48 @@ msgstr ""
 msgid "Failed to add computer"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:146
+#: src/app/ui/launcher/apps.controller.c:160
 msgid "Wake"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:146
-#: src/app/ui/launcher/apps.controller.c:148
+#: src/app/ui/launcher/apps.controller.c:160
+#: src/app/ui/launcher/apps.controller.c:162
 msgid "Retry"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:150
+#: src/app/ui/launcher/apps.controller.c:164
 msgid "Pair"
 msgstr ""
 
-#. apploader has error
-#: src/app/ui/launcher/apps.controller.c:386
+#: src/app/ui/launcher/apps.controller.c:456
 msgid "Failed to load apps"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:387
-#: src/app/ui/launcher/apps.controller.c:416
+#: src/app/ui/launcher/apps.controller.c:457
+#: src/app/ui/launcher/apps.controller.c:486
 msgid ""
 "Press \"Retry\" to load again.\n"
 "\n"
 "Restart your computer if error persists."
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:404
+#: src/app/ui/launcher/apps.controller.c:474
 msgid "Not paired"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:405
+#: src/app/ui/launcher/apps.controller.c:475
 msgid "Press \"Pair\" to pair this host with your account."
 msgstr ""
 
-#. server has error
-#: src/app/ui/launcher/apps.controller.c:415
+#: src/app/ui/launcher/apps.controller.c:485
 msgid "Host error"
 msgstr ""
 
-#. server has error
-#: src/app/ui/launcher/apps.controller.c:426
+#: src/app/ui/launcher/apps.controller.c:496
 msgid "Offline"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:427
+#: src/app/ui/launcher/apps.controller.c:497
 msgid ""
 "Press \"Wake\" to send Wake-on-LAN packet to turn the computer on if it "
 "supports this feature, press \"Retry\" to connect again.\n"
@@ -157,71 +317,92 @@ msgid ""
 "Try restart your computer if these doesn't work."
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:596
+#: src/app/ui/launcher/apps.controller.c:730
 msgid "Quitting game..."
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:657
+#: src/app/ui/launcher/apps.controller.c:800
 msgid "Unable to quit game"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:658
+#: src/app/ui/launcher/apps.controller.c:801
 msgid "Please make sure you are quitting with the same client."
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:709
+#: src/app/ui/launcher/apps.controller.c:852
 msgid "Resume streaming"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:710
+#: src/app/ui/launcher/apps.controller.c:853
 msgid "Start streaming"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:716
+#: src/app/ui/launcher/apps.controller.c:859
 msgid "Stop streaming"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:720
+#: src/app/ui/launcher/apps.controller.c:863
 msgid "Unstar"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:720
+#: src/app/ui/launcher/apps.controller.c:863
 msgid "Star"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:724
+#: src/app/ui/launcher/apps.controller.c:867
 msgid "Unhide"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:724
+#: src/app/ui/launcher/apps.controller.c:867
 msgid "Hide"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c:728
-#: src/app/ui/launcher/server.context_menu.c:75
+#: src/app/ui/launcher/apps.controller.c:871
+#: src/app/ui/launcher/server.context_menu.c:83
 msgid "Info"
 msgstr ""
 
-#: src/app/ui/launcher/launcher.controller.c:468
+#: src/app/ui/launcher/apps.controller.c:915
+#, c-format
+msgid ""
+"ID: %d\n"
+"Support HDR: %s"
+msgstr ""
+
+#: src/app/ui/launcher/apps.controller.c:917
+msgid "Yes"
+msgstr ""
+
+#: src/app/ui/launcher/apps.controller.c:917
+msgid "No"
+msgstr ""
+
+#: src/app/ui/launcher/launcher.controller.c:157
+#: src/app/ui/launcher/launcher.view.c:164
+#: src/app/ui/launcher/server.popup.c:363
+msgid "Select server"
+msgstr ""
+
+#: src/app/ui/launcher/launcher.controller.c:630
 msgid "No working decoder"
 msgstr ""
 
-#: src/app/ui/launcher/launcher.controller.c:472
+#: src/app/ui/launcher/launcher.controller.c:634
 msgid ""
 "Streaming can't work without a valid decoder.\n"
 "(If your device supports moonlight-embedded, install it and Aurora will "
 "use it automatically.)"
 msgstr ""
 
-#: src/app/ui/launcher/launcher.controller.c:476
+#: src/app/ui/launcher/launcher.controller.c:638
 msgid "Streaming can't work without a valid decoder."
 msgstr ""
 
-#: src/app/ui/launcher/launcher.controller.c:483
+#: src/app/ui/launcher/launcher.controller.c:645
 msgid "Can't save settings"
 msgstr ""
 
-#: src/app/ui/launcher/launcher.controller.c:486
+#: src/app/ui/launcher/launcher.controller.c:648
 msgid ""
 "Can't find a writable directory to save settings. Settings and pairing "
 "information will be lost when the TV is turned off.\n"
@@ -229,19 +410,9 @@ msgid ""
 "(If you're using webOS 3.0 or newer, restart the TV may fix this issue.)"
 msgstr ""
 
-#. Use list button for normal container
-#: src/app/ui/launcher/launcher.view.c:107
-msgid "Add computer"
-msgstr ""
-
-#: src/app/ui/launcher/launcher.view.c:119
-#: src/app/ui/settings/settings.view.c:31
-msgid "Settings"
-msgstr ""
-
-#: src/app/ui/launcher/launcher.view.c:125
-#: src/app/ui/settings/settings.controller.c:424
-msgid "Quit"
+#: src/app/ui/launcher/launcher.view.c:265
+#: src/app/ui/launcher/launcher.view.c:270
+msgid "Default"
 msgstr ""
 
 #: src/app/ui/launcher/pair.dialog.c:55
@@ -252,15 +423,19 @@ msgstr ""
 msgid "Enter PIN code on your computer."
 msgstr ""
 
-#: src/app/ui/launcher/server.context_menu.c:79
+#: src/app/ui/launcher/server.context_menu.c:87
 msgid "Show hidden apps"
 msgstr ""
 
-#: src/app/ui/launcher/server.context_menu.c:84
+#: src/app/ui/launcher/server.context_menu.c:91
+msgid "Wake settings"
+msgstr ""
+
+#: src/app/ui/launcher/server.context_menu.c:96
 msgid "Forget"
 msgstr ""
 
-#: src/app/ui/launcher/server.context_menu.c:133
+#: src/app/ui/launcher/server.context_menu.c:147
 #, c-format
 msgid ""
 "IP address: %s\n"
@@ -271,57 +446,49 @@ msgid ""
 "GeForce Experience: %s"
 msgstr ""
 
-#: src/app/ui/root.c:340
+#: src/app/ui/launcher/server.context_menu.c:152
+#: src/app/ui/launcher/server.context_menu.c:153
+msgid "YES"
+msgstr ""
+
+#: src/app/ui/launcher/server.context_menu.c:152
+#: src/app/ui/launcher/server.context_menu.c:153
+#: src/app/ui/launcher/server.context_menu.c:155
+msgid "NO"
+msgstr ""
+
+#: src/app/ui/launcher/server.context_menu.c:188
+msgid "Save"
+msgstr ""
+
+#: src/app/ui/launcher/server.context_menu.c:200
+msgid "Wake method"
+msgstr ""
+
+#: src/app/ui/launcher/server.context_menu.c:208
+msgid "HTTP wake URL"
+msgstr ""
+
+#: src/app/ui/launcher/server.popup.c:362
+msgid "Close"
+msgstr ""
+
+#: src/app/ui/launcher/server.popup.c:381
+msgid ""
+"No paired computers yet. Use the \"+\" button on the top bar to add one."
+msgstr ""
+
+#: src/app/ui/root.c:397
+msgid "Assertion failure"
+msgstr ""
+
+#: src/app/ui/root.c:404
 msgid "Failed to start streaming"
 msgstr ""
 
-#: src/app/ui/settings/panes/about.pane.c:59
-msgid "Version"
-msgstr ""
-
-#: src/app/ui/settings/panes/about.pane.c:60
-#: src/app/ui/settings/panes/video.pane.c:77
-msgid "Video decoder"
-msgstr ""
-
-#: src/app/ui/settings/panes/about.pane.c:61
-#: src/app/ui/settings/panes/audio.pane.c:94
-msgid "Audio backend"
-msgstr ""
-
-#: src/app/ui/settings/panes/about.pane.c:64
-msgid "System"
-msgstr ""
-
-#: src/app/ui/settings/panes/about.pane.c:71
-msgid "Screen resolution"
-msgstr ""
-
-#: src/app/ui/settings/panes/about.pane.c:76
-msgid "Refresh rate"
-msgstr ""
-
-#: src/app/ui/settings/panes/audio.pane.c:51
-#: src/app/ui/settings/panes/video.pane.c:54
-msgid "Auto"
-msgstr ""
-
-#: src/app/ui/settings/panes/audio.pane.c:95
-#, c-format
-msgid "Audio backend - using %s"
-msgstr ""
-
-#: src/app/ui/settings/panes/audio.pane.c:110
-#: src/app/ui/settings/settings.controller.c:24
-msgid "Audio Settings"
-msgstr ""
-
-#: src/app/ui/settings/panes/audio.pane.c:112
-msgid "Sound Channels (Experimental)"
-msgstr ""
-
 #: src/app/ui/settings/panes/av_pane.c:29
-msgid "Aurora uses moonlight-embedded to select a suitable decoder automatically."
+msgid ""
+"Aurora uses moonlight-embedded to select a suitable decoder automatically."
 msgstr ""
 
 #: src/app/ui/settings/panes/av_pane.c:50
@@ -329,266 +496,373 @@ msgstr ""
 msgid "%s is conflicting with %s"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:95
-msgid "Resolution and FPS"
+#: src/app/ui/settings/panes/basic.pane.c:76
+msgid "Auto"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:145
-msgid "Video bitrate"
+#: src/app/ui/settings/panes/basic.pane.c:129
+#: src/app/ui/streaming/streaming.view.c:218
+msgid "Resolution"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:161
-msgid "Fullscreen UI"
+#: src/app/ui/settings/panes/basic.pane.c:143
+msgid "Frame rate"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:166
-msgid "Can't use windowed UI for this decoder"
+#: src/app/ui/settings/panes/basic.pane.c:150
+#: src/app/ui/settings/panes/experimental.pane.c:153
+msgid "Bitrate"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:172
-#: src/app/ui/settings/panes/basic.pane.c:173
-msgid "Language"
+#: src/app/ui/settings/panes/basic.pane.c:164
+#: src/app/ui/streaming/streaming.view.c:220
+msgid "Video backend"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:205
-msgid ""
-"Your computer may not perform well when using this resolution and framerate."
+#: src/app/ui/settings/panes/basic.pane.c:171
+msgid "HEVC"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:220
-#, c-format
-msgid "Video bitrate - %d kbps"
+#: src/app/ui/settings/panes/basic.pane.c:175
+msgid "AV1"
 msgstr ""
 
-#: src/app/ui/settings/panes/basic.pane.c:228
-msgid "Higher bitrate may cause performance issue, try with caution."
-msgstr ""
-
-#: src/app/ui/settings/panes/host.pane.c:26
-msgid "Optimize game settings for streaming"
-msgstr ""
-
-#: src/app/ui/settings/panes/host.pane.c:27
-msgid ""
-"Change in-game settings to optimize for streaming. Resolution will be "
-"limited to 720p, 1080p or 4K. Framerate will be also limited to 30/60 FPS."
-msgstr ""
-
-#: src/app/ui/settings/panes/host.pane.c:30
-msgid "Mute computer while streaming"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:46
-msgid "View-only mode"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:47
-msgid "Don't send mouse, keyboard or gamepad input to host computer."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:49
-msgid "Capture system keys"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:50
-msgid "Capture and send system keys (e.g. Meta/Win key) to host computer."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:52
-msgid "Mouse"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:55
-msgid "Use mouse hardware"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:58
-msgid ""
-"Use plugged mouse device only when streaming. This will have better "
-"performance, but absolute mouse mode will not be enabled."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:63
-msgid "Absolute mouse mode"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:65
-#: src/app/ui/settings/panes/input.pane.c:104
-msgid ""
-"Better for remote desktop. For some games, mouse will not work properly."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:68
-msgid "Gamepad"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:70
-#: src/app/ui/settings/panes/input.pane.c:111
-msgid "Analog stick deadzone"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:74
-msgid ""
-"Note: Some games can enforce a larger deadzone than what Aurora is "
-"configured to use."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:77
-msgid "Virtual mouse"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:78
-msgid ""
-"Press LB + RS to move mouse cursor with sticks. LT/RT for left/right mouse "
-"buttons."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:72
-msgid "Enable HID Passthrough (Experimental)"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:75
-msgid ""
-"Enabling HID Passthrough disables standard Moonlight controller emulation to "
-"prevent duplicate inputs."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:81
-msgid "Swap ABXY buttons"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:82
-msgid ""
-"Swap A/B and X/Y gamepad buttons. Useful when you prefer Nintendo-like "
-"layouts."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c:100
-msgid "Absolute mouse mode can't be used when \"Use mouse hardware\" enabled."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:78
-#, c-format
-msgid "Video decoder - using %s"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:93
-#: src/app/ui/settings/settings.controller.c:25
-msgid "Video Settings"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:95
-msgid "Use H265 when possible"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:99
-msgid "H265 usually has better graphics, and supports HDR."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Periodic decoder refresh (HEVC)"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid ""
-"Request a keyframe every N seconds during HEVC streams to reduce long-session "
-"artifact drift. Off by default; use 10–30 s if you see blockiness or color smearing."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Enable H265 to use periodic decoder refresh."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-#, c-format
-msgid "Request a keyframe every %d seconds during HEVC streams."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid ""
-"Request a keyframe every N seconds during HEVC streams to reduce long-session "
-"artifact drift. Off by default."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:102
-#, c-format
-msgid "%s decoder doesn't support H265 codec."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:106
-msgid "Use AV1 when possible (Experimental)"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:111
-msgid ""
-"AV1 usually has better graphics, and supports HDR. However, it might be much "
-"slower than H265 or H264."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:115
-#, c-format
-msgid "%s decoder doesn't support AV1 codec."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c:119
+#: src/app/ui/settings/panes/basic.pane.c:184
 msgid "HDR"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c:126
-msgid "Learn more about HDR feature."
+#: src/app/ui/settings/panes/basic.pane.c:187
+msgid "10-bit SDR"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c:159
-#, c-format
-msgid "%s decoder doesn't support HDR."
+#: src/app/ui/settings/panes/basic.pane.c:191
+#: src/app/ui/streaming/streaming.view.c:224
+msgid "Audio"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c:163
-msgid "H265 is required to use HDR."
+#: src/app/ui/settings/panes/experimental.pane.c:72
+msgid "Balanced"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c:128
-msgid "HDR HLG (broadcast/streaming)"
+#: src/app/ui/settings/panes/experimental.pane.c:73
+msgid "Quality"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c:130
-msgid "Use HLG instead of HDR10 when available. Common in LG TVs and streaming."
+#: src/app/ui/settings/panes/experimental.pane.c:74
+msgid "Low latency"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c:166
+#: src/app/ui/settings/panes/experimental.pane.c:94
+#: src/app/ui/settings/settings.controller.c:41
+msgid "Experimental"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:97
+msgid "Language"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:105
+msgid "Show logs"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:114
+msgid "Game mode"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:118
+#: src/app/ui/streaming/streaming.view.c:219
+msgid "Video"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:120
+msgid "Full range YUV (SDR only)"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:124
+msgid "HEVC sliced frames"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:129
+msgid "Periodic decoder refresh (HEVC)"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:143
+#: src/app/ui/settings/panes/experimental.pane.c:278
+#: src/app/ui/settings/panes/experimental.pane.c:281
+msgid "Refresh interval"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:155
+msgid "Adaptive bitrate"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:157
+msgid "Profile"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:167
+#: src/app/ui/settings/panes/experimental.pane.c:212
+msgid "Reset"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:171
+msgid "Reset all settings to defaults"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:213
+msgid "Reset settings"
+msgstr ""
+
+#: src/app/ui/settings/panes/experimental.pane.c:214
 msgid ""
-"HDR is only supported on certain games and when connecting to supported "
-"monitor."
+"Restore all settings to defaults? Pairing is kept. You must reconnect the "
+"stream."
 msgstr ""
 
-#: src/app/ui/settings/settings.controller.c:21
-msgid "Basic Settings"
+#: src/app/ui/settings/panes/host.pane.c:28
+msgid "Optimize for streaming (SOPS)"
 msgstr ""
 
-#: src/app/ui/settings/settings.controller.c:22
-msgid "Host Settings"
+#: src/app/ui/settings/panes/host.pane.c:29
+msgid "Mute PC while streaming"
 msgstr ""
 
-#: src/app/ui/settings/settings.controller.c:23
-msgid "Input Settings"
+#: src/app/ui/settings/panes/host.pane.c:30
+msgid "Quit the game when the stream ends"
 msgstr ""
 
-#: src/app/ui/settings/settings.controller.c:26
-msgid "About"
+#: src/app/ui/settings/panes/host.pane.c:31
+msgid "Resume a running game automatically"
 msgstr ""
 
-#: src/app/ui/settings/settings.controller.c:424
+#: src/app/ui/settings/panes/host.pane.c:32
+msgid "Stats overlay on start"
+msgstr ""
+
+#: src/app/ui/settings/panes/host.pane.c:33
+msgid "Compact stats"
+msgstr ""
+
+#: src/app/ui/settings/panes/host.pane.c:35
+msgid "NTSC refresh (59.94 / 119.88)"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:70
+msgid "Send as touchpad"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:72
+msgid "Send as mouse"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:74
+msgid "View-only mode"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:75
+msgid "Capture system keys"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:77
+msgid "Mouse"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:80
+msgid "Use mouse hardware"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:85
+msgid "Absolute mouse mode"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:88
+msgid "Gamepad"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:90
+#: src/app/ui/settings/panes/input.pane.c:182
+msgid "Analog stick deadzone"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:97
+msgid "Virtual mouse"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:98
+msgid "Swap ABXY buttons"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:100
+msgid "Gamepad touchpad"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:102
+msgid "Mode"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:110
+#: src/app/ui/settings/panes/input.pane.c:164
+msgid "Pointer speed"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:120
+msgid "Multi-touch gestures"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:122
+msgid "Natural scrolling"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:125
+msgid "Controller"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:126
+msgid "Report battery to host"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:128
+msgid "Gamepad test"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:134
+msgid "Detect connected gamepads"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:141
+msgid "Test rumble"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:244
+msgid "unknown"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:248
+msgid "writable"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:248
+msgid "READ-ONLY"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:258
+msgid "Model"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:259
+msgid "Device"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:260
+msgid "Rumble"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:260
+msgid "supported"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:260
+msgid "not supported"
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:271
+#: src/app/ui/settings/panes/input.pane.c:307
+msgid "No gamepad connected."
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:296
+msgid "Rumble sent. If nothing moved, the pad ignored it."
+msgstr ""
+
+#: src/app/ui/settings/panes/input.pane.c:299
+#: src/app/ui/settings/panes/input.pane.c:303
+msgid "SDL refused the rumble"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_fps.c:74
+#: src/app/ui/settings/panes/pref_fps.c:79
+#, c-format
+msgid "%d FPS"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_fps.c:84
+#: src/app/ui/settings/panes/pref_fps.c:145
+msgid "Custom FPS"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_fps.c:102
+#: src/app/ui/settings/panes/pref_fps.c:121
+#, c-format
+msgid "%.2f FPS (Custom)"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_fps.c:105
+#: src/app/ui/settings/panes/pref_fps.c:124
+#, c-format
+msgid "%d FPS (Custom)"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_fps.c:155
+#, c-format
+msgid "Enter a custom framerate (%d-%d FPS):"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_res.c:91
+#: src/app/ui/settings/panes/pref_res.c:108
+msgid "Native"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_res.c:119
+#: src/app/ui/settings/panes/pref_res.c:175
+msgid "Custom Resolution"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_res.c:143
+#: src/app/ui/settings/panes/pref_res.c:157
+#, c-format
+msgid "%d * %d (Custom)"
+msgstr ""
+
+#: src/app/ui/settings/panes/pref_res.c:183
+msgid "Enter a custom resolution:"
+msgstr ""
+
+#: src/app/ui/settings/settings.controller.c:38
+#: src/app/ui/streaming/streaming.view.c:217
+msgid "Stream"
+msgstr ""
+
+#: src/app/ui/settings/settings.controller.c:40
+msgid "Host"
+msgstr ""
+
+#: src/app/ui/settings/settings.controller.c:993
+#: src/app/ui/settings/settings.controller.c:1004
 msgid "Later"
 msgstr ""
 
-#: src/app/ui/settings/settings.controller.c
+#: src/app/ui/settings/settings.controller.c:993
+msgid "Restart app"
+msgstr ""
+
+#: src/app/ui/settings/settings.controller.c:995
+msgid "Language changes take effect after restarting the app. Restart now?"
+msgstr ""
+
+#: src/app/ui/settings/settings.controller.c:1004
 msgid "Reconnect streaming"
 msgstr ""
 
-#: src/app/ui/settings/settings.controller.c
+#: src/app/ui/settings/settings.controller.c:1007
 msgid ""
 "Settings apply on the next streaming session. Reconnect now to use them "
 "right away?"
+msgstr ""
+
+#: src/app/ui/settings/settings.controller.c:1504
+#: src/app/ui/settings/settings.controller.c:1797
+#: src/app/ui/settings/settings.view.c:36
+msgid "Settings"
 msgstr ""
 
 #: src/app/ui/streaming/hints.c:9
@@ -599,299 +873,100 @@ msgstr ""
 
 #: src/app/ui/streaming/hints.c:10
 msgid ""
-"Frequent lagging on 5GHz Wi-Fi? Try changing to another channel, check Help "
-"for details."
+"Frequent lagging on 5GHz Wi-Fi? Try changing to another channel, check "
+"Help for details."
 msgstr ""
 
 #: src/app/ui/streaming/hints.c:11
 msgid ""
-"Xbox One/Series controller can't be directly connected via cable or official "
-"adapter."
+"Xbox One/Series controller can't be directly connected via cable or "
+"official adapter."
 msgstr ""
 
 #: src/app/ui/streaming/hints.c:13
 msgid ""
-"If you have ultra-wide monitor, you may need to change its resolution to fit "
-"16:9 for streaming."
+"If you have ultra-wide monitor, you may need to change its resolution to "
+"fit 16:9 for streaming."
 msgstr ""
 
-#: src/app/ui/streaming/streaming.controller.c:147
+#: src/app/ui/streaming/streaming.controller.c:330
+msgid "total"
+msgstr ""
+
+#: src/app/ui/streaming/streaming.controller.c:363
+#: src/app/ui/streaming/streaming.controller.c:370
+msgid "not available"
+msgstr ""
+
+#: src/app/ui/streaming/streaming.controller.c:421
 msgid "Connecting..."
 msgstr ""
 
-#: src/app/ui/streaming/streaming.controller.c:167
+#: src/app/ui/streaming/streaming.controller.c:445
 msgid "Disconnecting..."
 msgstr ""
 
-#: src/app/ui/streaming/streaming.view.c:25
+#: src/app/ui/streaming/streaming.view.c:35
 #, c-format
 msgid "Hint: %s"
 msgstr ""
 
-#: src/app/ui/streaming/streaming.view.c:81
+#: src/app/ui/streaming/streaming.view.c:101
 msgid "Full keyboard"
 msgstr ""
 
-#: src/app/ui/streaming/streaming.view.c
-msgid "Quick wheel"
-msgstr ""
-
-#: src/app/ui/streaming/wheel_pad.c
-msgid "Quick wheel"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c
-msgid "Quick actions"
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c
-msgid "Comma-separated action ids for overlay bar (e.g. alt_tab,alt_f4,win)."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c
-msgid "YELLOW button cycle (comma-separated)."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c
-msgid "Quick wheel slots (8 comma-separated ids)."
-msgstr ""
-
-#: src/app/ui/settings/panes/input.pane.c
-msgid "Crown lite floating buttons"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Alt+Tab"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Alt+F4"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Win"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Esc"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Tab"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Print Screen"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Ctrl+Shift+Esc"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "Keyboard"
-msgstr ""
-
-#: src/app/ui/streaming/quick_actions.c
-msgid "PrtSc"
-msgstr ""
-
-#: src/app/ui/streaming/streaming.view.c:83
+#: src/app/ui/streaming/streaming.view.c:110
 msgid "Virtual Mouse"
 msgstr ""
 
-#: src/app/ui/streaming/streaming.view.c
-msgid "HID Devices"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "No HID gamepads visible to Aurora"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Bridged"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Idle"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Plug out"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Plug in"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Back"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Close"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "CTM Device Bridge"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Devices"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "No HID devices visible to the native app"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Recognize as native Flydigi on PC"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "DualSense / DualShock settings"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid ""
-"Tune BT audio route, latency and haptics for the selected controller. "
-"Use Auto for game-driven audio; lower latency may fix crackling. "
-"Plug in the device for changes to take effect immediately."
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Audio/haptics latency — %d ms (default: 48 ms)"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Audio output"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid ""
-"Auto (game decides)\n"
-"Off\n"
-"Controller speaker\n"
-"Headphone jack\n"
-"Speaker + jack"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Speaker volume — %d%%"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Headphone jack volume — %d%%"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Haptics strength — %d%% (default: 100%%)"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Reset to defaults"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "Refresh"
-msgstr ""
-
-#: src/app/ui/streaming/hid_passthrough_panel.c
-msgid "starting"
-msgstr ""
-
-#: src/app/ui/streaming/streaming.view.c:96
+#: src/app/ui/streaming/streaming.view.c:123
 msgid "Disconnect"
 msgstr ""
 
-#: src/app/ui/streaming/streaming.view.c:105
+#: src/app/ui/streaming/streaming.view.c:132
 msgid "Quit game"
 msgstr ""
 
-#: src/app/ui/streaming/streaming.view.c:120
+#: src/app/ui/streaming/streaming.view.c:190
 msgid "Performance"
 msgstr ""
 
-#: src/app/ui/launcher/launcher.view.c
-msgid "Game streaming"
+#: src/app/ui/streaming/streaming.view.c:202
+msgid "FPS"
 msgstr ""
 
-#: src/app/ui/launcher/apps.controller.c
-msgid "Games on this PC"
+#: src/app/ui/streaming/streaming.view.c:202
+msgid "Game"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Smooth playback (TV)"
+#: src/app/ui/streaming/streaming.view.c:203
+msgid "Latency"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Tight display sync"
+#: src/app/ui/streaming/streaming.view.c:204
+msgid "Ping"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid ""
-"Starfish: PTS follows nominal frame rate and catches up to real time when late, "
-"with a fixed early presentation hint — stronger vsync without extra decode work. "
-"Reconnect stream after changing."
+#: src/app/ui/streaming/streaming.view.c:206
+msgid "Network"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Advanced decode (TV)"
+#: src/app/ui/streaming/streaming.view.c:207
+msgid "Frame loss"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Pause at decode time (default: On)"
+#: src/app/ui/streaming/streaming.view.c:208
+msgid "Bandwidth"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid ""
-"Starfish SMP: when enabled, the decoder may wait at decode time "
-"(slightly higher latency). Disable to reduce decode latency. "
-"Reconnect stream after changing."
+#: src/app/ui/streaming/streaming.view.c:221
+msgid "Host processing latency"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Decoder buffer — %d MB (default: %d MB)"
+#: src/app/ui/streaming/streaming.view.c:222
+msgid "Decoder latency"
 msgstr ""
 
-#: src/app/ui/settings/panes/video.pane.c
-msgid ""
-"Initial buffer for assembling video frames before feeding the decoder. "
-"Increase for large IDR frames at 4K/high bitrate."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "IDR request throttle — Off (default: Off)"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "IDR request throttle — %d ms (default: Off)"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid ""
-"Minimum interval between IDR (keyframe) requests when the decoder buffer is full. "
-"Off = immediate requests (default). Enable 1500–3000 ms to reduce control-channel "
-"congestion and input latency on aggressive host presets."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Use AV1 when possible"
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "AV1 can improve efficiency; requires host and decoder support."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-#, c-format
-msgid "%s decoder doesn't support AV1 codec."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "Enable H265 and/or AV1 (if supported) to stream HDR10 from the host."
-msgstr ""
-
-#: src/app/ui/settings/panes/video.pane.c
-msgid "HDR10 (PQ) when the host streams HDR (HEVC Main10 or AV1 Main10)."
+#: src/app/ui/streaming/streaming.view.c:223
+msgid "CPU / RAM"
 msgstr ""

@@ -127,5 +127,5 @@ static void add_about_line(lv_obj_t *list, const char *title, const char *value)
 
 static const char *module_id(const SS4S_ModuleInfo *info) {
     const char *id = SS4S_ModuleInfoGetId(info);
-    return id != NULL ? id : "Not available";
+    return id != NULL ? id : locstr("Not available");
 }

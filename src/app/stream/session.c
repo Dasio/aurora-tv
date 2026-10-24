@@ -12,6 +12,7 @@
 
 #include "logging.h"
 #include "ss4s.h"
+#include "util/i18n.h"
 #include "input/input_gamepad.h"
 #include "app_session.h"
 #include "session_worker.h"
@@ -129,16 +130,16 @@ void session_interrupt(session_t *session, bool quitapp, streaming_interrupt_rea
     if (reason >= STREAMING_INTERRUPT_ERROR) {
         switch (reason) {
             case STREAMING_INTERRUPT_WATCHDOG:
-                streaming_error(session, reason, "Video pipeline stalled");
+                streaming_error(session, reason, translatable("Video pipeline stalled"));
                 break;
             case STREAMING_INTERRUPT_NETWORK:
-                streaming_error(session, reason, "Network error happened");
+                streaming_error(session, reason, translatable("Network error happened"));
                 break;
             case STREAMING_INTERRUPT_DECODER:
-                streaming_error(session, reason, "Decoder reported error");
+                streaming_error(session, reason, translatable("Decoder reported error"));
                 break;
             default:
-                streaming_error(session, reason, "Error occurred while in streaming");
+                streaming_error(session, reason, translatable("Error occurred while in streaming"));
                 break;
         }
     }
@@ -256,7 +257,8 @@ void streaming_error(session_t *session, int code, const char *fmt, ...) {
     streaming_errno = code;
     va_list arglist;
     va_start(arglist, fmt);
-    vsnprintf(streaming_errmsg, sizeof(streaming_errmsg) / sizeof(char), fmt, arglist);
+    // Callers mark fmt with translatable(). "" clears the message, and gettext("") would return the .po header.
+    vsnprintf(streaming_errmsg, sizeof(streaming_errmsg) / sizeof(char), fmt[0] ? locstr(fmt) : fmt, arglist);
     va_end(arglist);
     SDL_UnlockMutex(session->mutex);
 }

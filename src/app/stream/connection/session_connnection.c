@@ -18,7 +18,7 @@ static void connection_terminated(int errorCode) {
         session_interrupt(current_session, false, STREAMING_INTERRUPT_HOST);
     } else {
         commons_log_error("Session", "Connection terminated, errorCode = 0x%x", errorCode);
-        streaming_error(current_session, 0, "Connection terminated, errorCode = 0x%x", errorCode);
+        streaming_error(current_session, 0, translatable("Connection terminated, errorCode = 0x%x"), errorCode);
         session_interrupt(current_session, false, STREAMING_INTERRUPT_NETWORK);
     }
 }
@@ -59,7 +59,8 @@ static void connection_stage_failed(int stage, int errorCode) {
     const char *stageName = LiGetStageName(stage);
     commons_log_error("Session", "Connection failed at stage %d (%s), errorCode = %d (%s)", stage, stageName, errorCode,
                       strerror(errorCode));
-    streaming_error(current_session, errorCode, "Connection failed at stage %d (%s), errorCode = %d (%s)", stage,
+    streaming_error(current_session, errorCode,
+                    translatable("Connection failed at stage %d (%s), errorCode = %d (%s)"), stage,
                     stageName, errorCode, strerror(errorCode));
 }
 

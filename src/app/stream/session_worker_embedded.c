@@ -21,6 +21,7 @@
 #include "session_priv.h"
 #include "util/bus.h"
 #include "util/user_event.h"
+#include "util/i18n.h"
 #include "errors.h"
 #include "app_session.h"
 #include "logging.h"
@@ -44,7 +45,7 @@ int session_worker_embedded(session_t *session) {
                                         !session->config.sops, session->input.view_only);
     if (proc == NULL) {
         session_set_state(session, STREAMING_ERROR);
-        streaming_error(session, GS_WRONG_STATE, "Failed to start embedded session: %s", strerror(errno));
+        streaming_error(session, GS_WRONG_STATE, translatable("Failed to start embedded session: %s"), strerror(errno));
         bus_pushevent(USER_STREAM_FINISHED, NULL, NULL);
         return -1;
     }
@@ -74,14 +75,14 @@ int session_worker_embedded(session_t *session) {
     int ret = embed_wait(proc);
     if (ret != 0) {
         if (WIFSIGNALED(ret)) {
-            streaming_error(session, GS_WRONG_STATE, "moonlight-embedded exited with signal %d.\n"
-                                                     "Last output: %s", WTERMSIG(ret), last_line);
+            streaming_error(session, GS_WRONG_STATE, translatable("moonlight-embedded exited with signal %d.\n"
+                                                                  "Last output: %s"), WTERMSIG(ret), last_line);
         } else if (WIFEXITED(ret)) {
-            streaming_error(session, GS_WRONG_STATE, "moonlight-embedded exited with code %d.\n"
-                                                     "Last output: %s", WEXITSTATUS(ret), last_line);
+            streaming_error(session, GS_WRONG_STATE, translatable("moonlight-embedded exited with code %d.\n"
+                                                                  "Last output: %s"), WEXITSTATUS(ret), last_line);
         } else {
-            streaming_error(session, GS_WRONG_STATE, "moonlight-embedded exited with unknown status %d.\n"
-                                                     "Last output: %s", ret, last_line);
+            streaming_error(session, GS_WRONG_STATE, translatable("moonlight-embedded exited with unknown status %d.\n"
+                                                                  "Last output: %s"), ret, last_line);
         }
 
     }

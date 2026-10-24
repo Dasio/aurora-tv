@@ -5,6 +5,7 @@
 #include "logging.h"
 #include "errors.h"
 #include "util/user_event.h"
+#include "util/i18n.h"
 #include "input/input_gamepad.h"
 #include "stream/connection/session_connection.h"
 #include "stream/audio/session_audio.h"
@@ -103,9 +104,9 @@ int session_worker(session_t *session) {
         const char *gs_error = NULL;
         gs_get_error(&gs_error);
         if (gs_error) {
-            streaming_error(session, ret, "Failed to launch session: %s (code %d)", gs_error, ret);
+            streaming_error(session, ret, translatable("Failed to launch session: %s (code %d)"), gs_error, ret);
         } else {
-            streaming_error(session, ret, "Failed to launch session: gamestream returned %d", ret);
+            streaming_error(session, ret, translatable("Failed to launch session: gamestream returned %d"), ret);
         }
         commons_log_error("Session", "Failed to launch session: gamestream returned %d, gs_error=%s", ret, gs_error);
         goto thread_cleanup;
@@ -143,20 +144,21 @@ int session_worker(session_t *session) {
         session_set_state(session, STREAMING_ERROR);
         switch (startResult) {
             case CALLBACKS_SESSION_ERROR_VDEC_UNSUPPORTED:
-                streaming_error(session, GS_WRONG_STATE, "Unsupported video codec.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Unsupported video codec."));
                 break;
             case CALLBACKS_SESSION_ERROR_VDEC_ERROR:
-                streaming_error(session, GS_WRONG_STATE, "Failed to open video decoder.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Failed to open video decoder."));
                 break;
             case CALLBACKS_SESSION_ERROR_ADEC_UNSUPPORTED:
-                streaming_error(session, GS_WRONG_STATE, "Unsupported audio codec.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Unsupported audio codec."));
                 break;
             case CALLBACKS_SESSION_ERROR_ADEC_ERROR:
-                streaming_error(session, GS_WRONG_STATE, "Failed to open audio backend.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Failed to open audio backend."));
                 break;
             default: {
                 if (!streaming_errno) {
-                    streaming_error(session, GS_WRONG_STATE, "Failed to start connection: Limelight returned %d (%s)",
+                    streaming_error(session, GS_WRONG_STATE,
+                                    translatable("Failed to start connection: Limelight returned %d (%s)"),
                                     startResult, strerror(startResult));
                 }
                 break;

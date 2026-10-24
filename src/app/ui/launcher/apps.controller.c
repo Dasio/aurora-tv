@@ -912,9 +912,9 @@ static void app_detail_dialog(apps_fragment_t *fragment, const apploader_item_t 
     lv_obj_t *msgbox = lv_msgbox_create_i18n(NULL, app->base.name, "text", btn_txts, false);
     lv_obj_t *msgobj = lv_msgbox_get_text(msgbox);
     lv_label_set_text_fmt(msgobj,
-                          "ID: %d\n"
-                          "Support HDR: %s",
-                          app->base.id, app->base.hdr ? "Yes" : "No");
+                          locstr("ID: %d\n"
+                                 "Support HDR: %s"),
+                          app->base.id, app->base.hdr ? locstr("Yes") : locstr("No"));
     lv_obj_center(msgbox);
     lv_obj_add_event_cb(msgbox, app_detail_click_cb, LV_EVENT_CLICKED, NULL);
 }

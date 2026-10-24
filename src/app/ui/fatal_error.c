@@ -9,6 +9,8 @@
 #include "lvgl.h"
 
 #include "util/bus.h"
+#include "util/i18n.h"
+#include "lvgl/util/lv_app_utils.h"
 #include "logging.h"
 
 static void fatal_error_popup(void *data);
@@ -16,16 +18,17 @@ static void fatal_error_popup(void *data);
 static void fatal_error_quit(lv_event_t *ev);
 
 typedef struct fatal_error_data_t {
-    char title[32];
+    // Translated titles run longer than the English ones.
+    char title[128];
     char message[1024];
 } fatal_error_data_t;
 
 void app_fatal_error(const char *title, const char *fmt, ...) {
     fatal_error_data_t *data = malloc(sizeof(fatal_error_data_t));
-    snprintf(data->title, 32, "%s", title);
+    snprintf(data->title, sizeof(data->title), "%s", locstr(title));
     va_list args;
     va_start(args, fmt);
-    vsnprintf(data->message, 1024, fmt, args);
+    vsnprintf(data->message, sizeof(data->message), locstr(fmt), args);
     va_end(args);
     app_bus_post(global, fatal_error_popup, data);
 }
@@ -33,8 +36,8 @@ void app_fatal_error(const char *title, const char *fmt, ...) {
 
 static void fatal_error_popup(void *data) {
     fatal_error_data_t *error_data = data;
-    static const char *btn_txts[] = {"Quit", ""};
-    lv_obj_t *msgbox = lv_msgbox_create(NULL, error_data->title, error_data->message, btn_txts, false);
+    static const char *btn_txts[] = {translatable("Quit"), ""};
+    lv_obj_t *msgbox = lv_msgbox_create_i18n(NULL, error_data->title, error_data->message, btn_txts, false);
     lv_obj_add_event_cb(msgbox, fatal_error_quit, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_flag(msgbox, LV_OBJ_FLAG_USER_4);
     lv_obj_center(msgbox);

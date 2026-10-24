@@ -273,12 +273,13 @@ static void launcher_refresh_profile_dropdown(launcher_fragment_t *controller) {
         if (i > 0) {
             strcat(options, "\n");
         }
-        strcat(options, profile->name);
+        // profile_manager stores the built-in profile as "Default"; translate it only while it keeps that name.
+        strcat(options, strcmp(profile->name, "Default") == 0 ? locstr("Default") : profile->name);
         if (active_id && strcmp(profile->id, active_id) == 0) {
             active_index = i;
         }
     }
-    lv_dropdown_set_options(controller->profile_dropdown, options[0] ? options : "Default");
+    lv_dropdown_set_options(controller->profile_dropdown, options[0] ? options : locstr("Default"));
     lv_dropdown_set_selected(controller->profile_dropdown, active_index);
 }
 

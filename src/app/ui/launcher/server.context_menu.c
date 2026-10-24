@@ -147,11 +147,12 @@ static void open_info(const pclist_t *node) {
     lv_label_set_text_fmt(message, locstr("IP address: %s\nGPU: %s\nSupports 4K: %s\n"
                                           "Supports HDR: %s\nHost Software Version: %s\n"
                                           "GeForce Experience: %s"),
-                          server->serverInfo.address, str_null_or_empty(server->gpuType) ? "Unknown" : server->gpuType,
-                          server->supports4K ? "YES" : "NO",
-                          server->supportsHdr ? "YES" : "NO",
+                          server->serverInfo.address,
+                          str_null_or_empty(server->gpuType) ? locstr("Unknown") : server->gpuType,
+                          server->supports4K ? locstr("YES") : locstr("NO"),
+                          server->supportsHdr ? locstr("YES") : locstr("NO"),
                           server->serverInfo.serverInfoAppVersion,
-                          server->isGfe ? server->serverInfo.serverInfoGfeVersion : "NO");
+                          server->isGfe ? server->serverInfo.serverInfoGfeVersion : locstr("NO"));
     lv_obj_add_event_cb(mbox, info_action_cb, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_center(mbox);
 }
