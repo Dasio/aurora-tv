@@ -102,7 +102,7 @@ Aurora is built via **cross-compilation** on **Linux** (or WSL2 on Windows).
 
 ### Prerequisites
 
-**Linux (Ubuntu/Debian):**
+**Linux (Ubuntu/Debian):** Ubuntu 24.04+ or Debian 12+. The webOS SDK's host tools need glibc 2.36 or newer and do not run on Ubuntu 22.04.
 ```bash
 sudo apt-get update
 sudo apt-get install -y cmake gawk curl git build-essential
@@ -126,8 +126,8 @@ The `.ipk` will be created in `dist/`.
 
 ```bash
 cd /tmp
-curl -L -O https://github.com/openlgtv/buildroot-nc4/releases/download/webos-b17b4cc/arm-webos-linux-gnueabi_sdk-buildroot.tar.gz
-tar -xzf arm-webos-linux-gnueabi_sdk-buildroot.tar.gz
+curl -L -O https://github.com/openlgtv/buildroot-nc4/releases/download/2026.08-webos/arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz
+tar -xzf arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz
 ./arm-webos-linux-gnueabi_sdk-buildroot/relocate-sdk.sh
 ```
 
@@ -167,7 +167,7 @@ dist/com.aurora.gamestream_1.0.2_arm.ipk
 
 **WSL2 (Ubuntu):**
 ```bash
-wsl --install -d Ubuntu
+wsl --install -d Ubuntu-24.04
 # In Ubuntu:
 sudo apt-get install cmake gawk curl git build-essential
 ./scripts/webos/build_for_lg.sh
@@ -189,6 +189,8 @@ export WEBOS_SDK_DIR=/path/to/arm-webos-linux-gnueabi_sdk-buildroot
 
 ```bash
 sudo mv /tmp/arm-webos-linux-gnueabi_sdk-buildroot /opt/
+# A moved SDK keeps its old absolute paths until it is relocated again.
+sudo /opt/arm-webos-linux-gnueabi_sdk-buildroot/relocate-sdk.sh
 export TOOLCHAIN_FILE=/opt/arm-webos-linux-gnueabi_sdk-buildroot/share/buildroot/toolchainfile.cmake
 ./scripts/webos/easy_build.sh -DCMAKE_BUILD_TYPE=Release
 ```

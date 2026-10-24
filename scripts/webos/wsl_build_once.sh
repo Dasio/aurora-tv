@@ -17,11 +17,13 @@ export CI=1
 export CMAKE_BINARY_DIR="${CMAKE_BINARY_DIR:-/tmp/aurora-webos-build}"
 export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-RelWithDebInfo}"
 
-SDK_VERSION=webos-a38c582
+SDK_VERSION=2026.08-webos
 SDK_ARCHIVE=arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz
 SDK_URL="https://github.com/openlgtv/buildroot-nc4/releases/download/${SDK_VERSION}/${SDK_ARCHIVE}"
 # Persist outside /tmp so WSL reboots / tmp cleanups do not force a full re-download.
-SDK_CACHE="${AURORA_SDK_CACHE:-$HOME/.cache/aurora-sdk}"
+# Keyed by version: every release has the same archive and directory name, so an
+# unversioned cache keeps serving the previous SDK after a bump.
+SDK_CACHE="${AURORA_SDK_CACHE:-$HOME/.cache/aurora-sdk}/${SDK_VERSION}"
 SDK_DIR="${WEBOS_SDK_DIR:-$SDK_CACHE/arm-webos-linux-gnueabi_sdk-buildroot}"
 
 echo "=== Aurora WSL build ==="
@@ -54,7 +56,7 @@ if [ ! -f "$SDK_DIR/share/buildroot/toolchainfile.cmake" ]; then
   echo "Downloading SDK $SDK_VERSION..."
   cd "$SDK_CACHE"
   # Prefer a complete Windows-side cache if present (avoids re-fetch across WSL).
-  WIN_SDK="/mnt/c/Projetos/moonlight/lg/moonlight-tv/.cache/$SDK_ARCHIVE"
+  WIN_SDK="/mnt/c/Projetos/moonlight/lg/moonlight-tv/.cache/$SDK_VERSION/$SDK_ARCHIVE"
   if [ -f "$WIN_SDK" ] && [ "$(stat -c%s "$WIN_SDK" 2>/dev/null || echo 0)" -ge 300000000 ]; then
     echo "Using Windows SDK cache: $WIN_SDK"
     cp -f "$WIN_SDK" "$SDK_ARCHIVE"

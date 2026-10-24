@@ -39,11 +39,12 @@ fi
 cd /tmp
 if [ ! -d arm-webos-linux-gnueabi_sdk-buildroot ] || \
    [ ! -f arm-webos-linux-gnueabi_sdk-buildroot/share/buildroot/toolchainfile.cmake ]; then
-    # Match CI / upstream (webos-a38c582): artifacts are suffixed with host arch.
+    # Match CI (.github/actions/build-webos): artifacts are suffixed with host arch.
+    SDK_VERSION=2026.08-webos
     SDK_ARCHIVE=arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz
     if [ ! -f "${SDK_ARCHIVE}" ]; then
-        echo "Downloading webOS SDK (webos-a38c582)..."
-        curl -sL -O "https://github.com/openlgtv/buildroot-nc4/releases/download/webos-a38c582/${SDK_ARCHIVE}"
+        echo "Downloading webOS SDK (${SDK_VERSION})..."
+        curl -sSL --fail -O "https://github.com/openlgtv/buildroot-nc4/releases/download/${SDK_VERSION}/${SDK_ARCHIVE}"
     fi
     echo "Extracting SDK..."
     tar -xzf "${SDK_ARCHIVE}"
