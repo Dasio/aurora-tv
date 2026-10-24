@@ -6,11 +6,14 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-SDK_VERSION="webos-a38c582"
+SDK_VERSION="2026.08-webos"
 SDK_ARCHIVE="arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz"
 SDK_URL="https://github.com/openlgtv/buildroot-nc4/releases/download/${SDK_VERSION}/${SDK_ARCHIVE}"
 BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
-SDK_DIR="${WEBOS_SDK_DIR:-/tmp/arm-webos-linux-gnueabi_sdk-buildroot}"
+# Keyed by version: every release has the same archive and directory name, so a
+# shared /tmp path would keep serving the previous SDK after a bump.
+SDK_CACHE="/tmp/aurora-sdk/${SDK_VERSION}"
+SDK_DIR="${WEBOS_SDK_DIR:-${SDK_CACHE}/arm-webos-linux-gnueabi_sdk-buildroot}"
 
 cd "${PROJECT_ROOT}"
 
@@ -47,9 +50,9 @@ if [ ! -f "${SDK_DIR}/share/buildroot/toolchainfile.cmake" ]; then
     echo "WebOS SDK not found at ${SDK_DIR}"
     echo "Downloading SDK (buildroot-nc4 ${SDK_VERSION})..."
     
-    mkdir -p /tmp
-    cd /tmp
-    
+    mkdir -p "${SDK_CACHE}"
+    cd "${SDK_CACHE}"
+
     if [ ! -f "${SDK_ARCHIVE}" ]; then
         if command -v curl &>/dev/null; then
             curl -L -O "${SDK_URL}"
@@ -67,7 +70,7 @@ if [ ! -f "${SDK_DIR}/share/buildroot/toolchainfile.cmake" ]; then
     if [ -d "arm-webos-linux-gnueabi_sdk-buildroot" ]; then
         echo "Relocating SDK..."
         ./arm-webos-linux-gnueabi_sdk-buildroot/relocate-sdk.sh
-        SDK_DIR="/tmp/arm-webos-linux-gnueabi_sdk-buildroot"
+        SDK_DIR="${SDK_CACHE}/arm-webos-linux-gnueabi_sdk-buildroot"
     else
         echo "Error: Unexpected SDK structure after extraction"
         exit 1

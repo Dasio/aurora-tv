@@ -25,7 +25,8 @@ function Invoke-AuroraWebOSDockerBuild {
         "-v", "${ProjectRoot}:/build",
         "-v", "${InnerScriptPath}:/docker_build.sh",
         "-w", "/build",
-        "ubuntu:22.04",
+        # 24.04, not 22.04: the buildroot-nc4 SDK host tools need glibc >= 2.36.
+        "ubuntu:24.04",
         "bash", "-c", "sed 's/\r$//' /docker_build.sh | bash"
     )
 

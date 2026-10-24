@@ -1,5 +1,6 @@
 # Dockerfile for building Aurora for webOS
-FROM ubuntu:22.04
+# 24.04, not 22.04: the buildroot-nc4 SDK host tools need glibc >= 2.36.
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 

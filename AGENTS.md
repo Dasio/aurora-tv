@@ -36,6 +36,9 @@ wsl -d Ubuntu -- python3 /mnt/c/.../scripts/webos/run_wsl_build.py RelWithDebInf
 
 Gotchas:
 
+- The NDK (`2026.08-webos`, gcc 16) needs glibc ≥ 2.36 on the build host: Ubuntu 24.04+,
+  not 22.04. Every NDK release ships the same archive and directory name, so local SDK
+  caches are keyed by version — keep it that way when bumping the tag.
 - `gettext` (msgfmt) is a hard configure-time `FATAL_ERROR` for non-webOS builds
   (`cmake/MoonlightI18n.cmake`). webOS builds skip gettext and convert `.po` →
   `cstrings.json` at package time via `scripts/webos/po2json.awk`.

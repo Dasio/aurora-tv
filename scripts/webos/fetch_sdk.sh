@@ -3,9 +3,11 @@ set -euo pipefail
 export HOME=/home/guilherme
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-CACHE=/home/guilherme/.cache/aurora-sdk
+# Same layout as wsl_build_once.sh: caches are keyed by SDK version.
+SDK_VERSION=2026.08-webos
+CACHE=/home/guilherme/.cache/aurora-sdk/$SDK_VERSION
 ARCHIVE=arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz
-WIN_CACHE="/mnt/c/Projetos/moonlight/lg/moonlight-tv/.cache/$ARCHIVE"
+WIN_CACHE="/mnt/c/Projetos/moonlight/lg/moonlight-tv/.cache/$SDK_VERSION/$ARCHIVE"
 
 mkdir -p "$CACHE"
 cd "$CACHE"

@@ -74,7 +74,7 @@ docker run --rm \
   -v "$(pwd):/build" \
   -v "$(pwd)/scripts/webos/docker_build_inner.sh:/docker_build.sh" \
   -w /build -e CI=1 -e DOCKER_SKIP_SUBMODULES=1 \
-  ubuntu:22.04 \
+  ubuntu:24.04 \
   bash -c "sed 's/\r$//' /docker_build.sh | bash"
 ```
 
