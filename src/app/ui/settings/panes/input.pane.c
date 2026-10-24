@@ -73,6 +73,11 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
 
     pref_checkbox(view, locstr("View-only mode"), &app_configuration->viewonly, false);
     pref_checkbox(view, locstr("Capture system keys"), &app_configuration->syskey_capture, false);
+#if TARGET_WEBOS
+    pref_checkbox(view, locstr("Send Home button to the computer"), &app_configuration->home_key_to_host, false);
+    pref_desc_label(view, locstr("On: the remote's Home button works as the Windows Home key during a stream. "
+                                 "Off: it opens the TV home screen."), false);
+#endif
 
     pref_header(view, locstr("Mouse"));
 

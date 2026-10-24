@@ -181,6 +181,7 @@ void settings_initialize(app_settings_t *config, char *conf_dir) {
     config->hevc_sliced_frames = false;
     config->idr_refresh_interval_ms = 0;
     config->render_queue_frames = 0;
+    config->audio_lead_ms = 20;
     config->show_stats_on_start = false;
     config->show_stats_compact = false;
     config->show_logs = false;
@@ -193,6 +194,8 @@ void settings_initialize(app_settings_t *config, char *conf_dir) {
 #if defined(TARGET_WEBOS)
     /* Home/Win need KEYS_HOME; default capture on so Meta reaches the host too. */
     config->syskey_capture = true;
+    config->home_key_to_host = false;
+    config->audio_sequential_pts = true;
     /* Auto pairs audio with the video module (SMP/NDL). */
     set_string(&config->audio_backend, "auto");
     settings_apply_ntsc_preset_refresh(config, config->stream.fps);
@@ -217,13 +220,9 @@ bool settings_read(app_settings_t *config) {
     if (ret == 0) {
         settings_reconcile_refresh_rate(config);
     }
-#if defined(TARGET_WEBOS)
-    /* Older builds forced Pulse (silent LFE). Pair audio with video again. */
-    if (config->audio_backend == NULL || config->audio_backend[0] == '\0' ||
-        strcmp(config->audio_backend, "pulse") == 0) {
+    if (config->audio_backend == NULL || config->audio_backend[0] == '\0') {
         set_string(&config->audio_backend, "auto");
     }
-#endif
     return ret == 0;
 }
 
@@ -273,6 +272,7 @@ bool settings_save(app_settings_t *config) {
     ini_write_bool(fp, "swap_abxy", config->swap_abxy);
     ini_write_int(fp, "stick_deadzone", config->stick_deadzone);
     ini_write_bool(fp, "syskey_capture", config->syskey_capture);
+    ini_write_bool(fp, "home_key_to_host", config->home_key_to_host);
     ini_write_bool(fp, "report_gamepad_battery", config->report_gamepad_battery);
 
     ini_write_section(fp, "video");
@@ -293,7 +293,10 @@ bool settings_save(app_settings_t *config) {
     ini_write_bool(fp, "game_mode", config->game_mode);
 
     ini_write_section(fp, "audio");
-    ini_write_string(fp, "backend", config->audio_backend);
+    ini_write_string(fp, "audio_module", config->audio_backend);
+    ini_write_int(fp, "audio_lead_ms", config->audio_lead_ms);
+    ini_write_int(fp, "surround_51_mode", config->surround_51_mode);
+    ini_write_bool(fp, "audio_sequential_pts", config->audio_sequential_pts);
     if (config->audio_device && config->audio_device[0]) {
         ini_write_string(fp, "device", config->audio_device);
     }
@@ -476,11 +479,20 @@ static int settings_parse(app_settings_t *config, const char *section, const cha
         /* Legacy keys ignored (removed from settings). */
     } else if (INI_FULL_MATCH("video", "force_full_color_range")) {
         config->force_full_color_range = INI_IS_TRUE(value);
+    } else if (INI_FULL_MATCH("video", "cadence_pacing")) {
+        /* Retired: C5 NDL HEVC ignores future PTS, so host-clock pacing changed nothing. */
     } else if (INI_FULL_MATCH("video", "render_queue_frames")) {
         /* Retired V-Sync queue: keep 0 so old ini files cannot re-enable it. */
         config->render_queue_frames = 0;
     } else if (INI_FULL_MATCH("audio", "surround_pcm")) {
-        /* Legacy: ignored; webOS 5.1 uses host surroundParams + NDL Opus passthrough. */
+        /* Legacy bool (default true in v1.2.x, wrong speakers): ignored; see surround_51_mode. */
+    } else if (INI_FULL_MATCH("audio", "audio_sequential_pts")) {
+        config->audio_sequential_pts = INI_IS_TRUE(value);
+    } else if (INI_FULL_MATCH("audio", "surround_51_mode")) {
+        set_int(&config->surround_51_mode, value);
+        if (config->surround_51_mode < SURROUND_51_PASSTHROUGH || config->surround_51_mode > SURROUND_51_PCM) {
+            config->surround_51_mode = SURROUND_51_PASSTHROUGH;
+        }
     } else if (INI_NAME_MATCH("surround")) {
         config->stream.audioConfiguration = parse_audio_config(value);
     } else if (INI_NAME_MATCH("sops")) {
@@ -529,10 +541,26 @@ static int settings_parse(app_settings_t *config, const char *section, const cha
         config->report_gamepad_battery = INI_IS_TRUE(value);
     } else if (INI_NAME_MATCH("syskey_capture")) {
         config->syskey_capture = INI_IS_TRUE(value);
+    } else if (INI_NAME_MATCH("home_key_to_host")) {
+        config->home_key_to_host = INI_IS_TRUE(value);
     } else if (INI_FULL_MATCH("video", "decoder")) {
         set_string(&config->decoder, value);
     } else if (INI_FULL_MATCH("audio", "backend")) {
+#if defined(TARGET_WEBOS)
+        /* Legacy key: older builds forced Pulse (silent LFE), so it never reflects a user
+         * choice. Pair audio with video again; explicit choices live in audio_module. */
+        if (strcmp(value, "pulse") == 0) {
+            value = "auto";
+        }
+#endif
         set_string(&config->audio_backend, value);
+    } else if (INI_FULL_MATCH("audio", "audio_module")) {
+        set_string(&config->audio_backend, value);
+    } else if (INI_FULL_MATCH("audio", "audio_lead_ms")) {
+        set_int(&config->audio_lead_ms, value);
+        if (config->audio_lead_ms < 0 || config->audio_lead_ms > 150) {
+            config->audio_lead_ms = 20;
+        }
     } else if (INI_FULL_MATCH("audio", "device")) {
         set_string(&config->audio_device, value);
     } else if (INI_NAME_MATCH("language")) {

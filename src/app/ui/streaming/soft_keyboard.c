@@ -22,8 +22,8 @@
 #define KBD_KEY_BG      0x2C2C2C
 #define KBD_KEY_PRESS   0x3A3A3A
 #define KBD_PANEL_BG    0x1B1B1B
-#define KBD_FOCUS_PURPLE 0x8B5CF6
-#define KBD_CHECKED_BG  0x5B21B6
+#define KBD_FOCUS_BLUE 0x3B82F6
+#define KBD_CHECKED_BG  0x1D4ED8
 
 typedef enum {
     KBD_LAYER_ALPHA,
@@ -371,13 +371,19 @@ static void kbd_release_held_key(soft_kbd_t *kbd) {
     kbd->held_btn_id = LV_BTNMATRIX_BTN_NONE;
     kbd->held_vk = 0;
     kbd->held_with_shift = false;
+    const keyboard_modifier_state_t mods_before = kbd->mods;
     keyboard_input_release_toggles(kbd->input, &kbd->mods, app_configuration->syskey_capture);
-    if (kbd->layer == KBD_LAYER_ALPHA) {
+    if (kbd->layer == KBD_LAYER_ALPHA && kbd->upper_case != kbd->mods.shift) {
+        /* set_map rebuilds and redraws all 59 keys: only when the case actually flipped
+         * (one-shot Shift released), not on every keystroke. */
         kbd->upper_case = kbd->mods.shift;
         if (kbd->btnm) {
             lv_btnmatrix_set_map(kbd->btnm, kbd->upper_case ? alpha_map_upper : alpha_map_lower);
             kbd_apply_controls(kbd);
         }
+    } else if (kbd->btnm && memcmp(&mods_before, &kbd->mods, sizeof(kbd->mods)) != 0) {
+        /* One-shot Ctrl/Alt/Win released: repaint only those keys. */
+        kbd_update_modifier_visuals(kbd);
     }
 }
 
@@ -495,17 +501,17 @@ static void kbd_apply_theme(lv_obj_t *btnm) {
 
     lv_obj_set_style_bg_color(btnm, lv_color_hex(KBD_KEY_PRESS), LV_PART_ITEMS | LV_STATE_PRESSED);
 
-    /* Focus: purple outline, keep dark key fill (not Aurora primary fill). */
+    /* Focus: blue outline, keep dark key fill (not Aurora primary fill). */
     lv_obj_set_style_bg_color(btnm, lv_color_hex(KBD_KEY_BG), LV_PART_ITEMS | LV_STATE_FOCUSED);
     lv_obj_set_style_bg_opa(btnm, LV_OPA_COVER, LV_PART_ITEMS | LV_STATE_FOCUSED);
     lv_obj_set_style_bg_color(btnm, lv_color_hex(KBD_KEY_BG), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
     lv_obj_set_style_bg_opa(btnm, LV_OPA_COVER, LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
-    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_PURPLE), LV_PART_ITEMS | LV_STATE_FOCUSED);
-    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_PURPLE), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_BLUE), LV_PART_ITEMS | LV_STATE_FOCUSED);
+    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_BLUE), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
     lv_obj_set_style_border_width(btnm, LV_DPX(3), LV_PART_ITEMS | LV_STATE_FOCUSED);
     lv_obj_set_style_border_width(btnm, LV_DPX(3), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
-    lv_obj_set_style_outline_color(btnm, lv_color_hex(KBD_FOCUS_PURPLE), LV_PART_ITEMS | LV_STATE_FOCUSED);
-    lv_obj_set_style_outline_color(btnm, lv_color_hex(KBD_FOCUS_PURPLE), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_outline_color(btnm, lv_color_hex(KBD_FOCUS_BLUE), LV_PART_ITEMS | LV_STATE_FOCUSED);
+    lv_obj_set_style_outline_color(btnm, lv_color_hex(KBD_FOCUS_BLUE), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
     lv_obj_set_style_outline_width(btnm, LV_DPX(2), LV_PART_ITEMS | LV_STATE_FOCUSED);
     lv_obj_set_style_outline_width(btnm, LV_DPX(2), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
     lv_obj_set_style_outline_opa(btnm, LV_OPA_80, LV_PART_ITEMS | LV_STATE_FOCUSED);
@@ -521,9 +527,9 @@ static void kbd_apply_theme(lv_obj_t *btnm) {
     lv_obj_set_style_bg_color(btnm, lv_color_hex(KBD_CHECKED_BG),
                               LV_PART_ITEMS | LV_STATE_CHECKED | LV_STATE_FOCUS_KEY);
     lv_obj_set_style_bg_opa(btnm, LV_OPA_COVER, LV_PART_ITEMS | LV_STATE_CHECKED | LV_STATE_FOCUS_KEY);
-    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_PURPLE),
+    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_BLUE),
                                   LV_PART_ITEMS | LV_STATE_CHECKED | LV_STATE_FOCUSED);
-    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_PURPLE),
+    lv_obj_set_style_border_color(btnm, lv_color_hex(KBD_FOCUS_BLUE),
                                   LV_PART_ITEMS | LV_STATE_CHECKED | LV_STATE_FOCUS_KEY);
 
     lv_obj_set_style_outline_width(btnm, 0, LV_STATE_FOCUSED);

@@ -36,6 +36,15 @@ enum {
 #define TOUCHPAD_SPEED_MAX 200
 #define TOUCHPAD_SPEED_DEFAULT 100
 
+/** NDL Opus passthrough (default; correct 5.1 on C5 + eARC bar). */
+#define SURROUND_51_PASSTHROUGH 0
+/**
+ * Client PCM in the NDL 6-channel slot order measured on C5/G5 + eARC bar:
+ * FL RR FR RL C LFE. Stops the dropouts, but on an LG 5.1 bar RL was silent and RR leaked to
+ * the front: LG's 6-channel PCM path is not discrete there. Kept for other bars (Sonos, #80).
+ */
+#define SURROUND_51_PCM 1
+
 typedef struct app_settings_t {
     STREAM_CONFIGURATION stream;
     int debug_level;
@@ -61,6 +70,9 @@ typedef struct app_settings_t {
     bool touchpad_natural_scroll;
     bool swap_abxy;
     bool syskey_capture;
+    /** webOS: remote Home during a stream goes to the host as Windows Home (VK_HOME) instead of
+     * opening the TV home screen. Off by default (TV behaviour, as before v1.3.1). */
+    bool home_key_to_host;
     bool hdr;   /* HDR10 (PQ) over HEVC Main10 or AV1 Main10 when host and decoder support it */
     /** Negotiate HEVC/AV1 Main10 without requiring HDR (SDR 10-bit; less banding). */
     bool force_10bit;
@@ -83,6 +95,22 @@ typedef struct app_settings_t {
      * on arrival). Old moonlight.ini keys are ignored.
      */
     int render_queue_frames;
+    /**
+     * webOS NDL Opus passthrough (5.1): fixed lead on audio stamps, in ms. Buffers that much
+     * audio in the TV's plane so late/bunched packets do not cut out; sound trails picture
+     * by the same amount. 0 = stamp on arrival (old behaviour).
+     */
+    int audio_lead_ms;
+    /**
+     * webOS 5.1 audio path: NDL Opus passthrough or client PCM (escape hatch for eARC bars
+     * where passthrough cut out before sequential stamps, #80). SURROUND_51_*.
+     */
+    int surround_51_mode;
+    /**
+     * webOS NDL Opus plane: step each audio stamp one frame past the previous one instead of
+     * reusing the arrival millisecond (repeated stamps cut 5.1 passthrough, #80). Default on.
+     */
+    bool audio_sequential_pts;
     bool show_stats_on_start;
     bool show_stats_compact;
     /** On-screen log overlay preference (Yellow cycles Off/Live/Frozen). */

@@ -46,10 +46,16 @@ typedef struct {
     bool suppress_item_activate;
     /** Set when Back closes an open dropdown; suppresses closing the pane popup on the same press. */
     bool suppress_pane_back;
+    /* SS4S modules are picked once at startup (libs_init): backend changes need a relaunch. */
+    bool needs_app_restart;
+    /* Tick when suppress_pane_back was armed; it only covers the close request of that press. */
+    uint32_t suppress_pane_back_tick;
 
     /** Launcher overlay: second AppBar row + dimmed body (embedded mode only). */
     lv_obj_t *embed_root;
     lv_obj_t *embed_appbar;
+    /** Launcher embed only: the inline Stream pane. Deleted before the view tree goes away. */
+    lv_fragment_t *embed_pane;
 
     /** Modal pane opened from the embedded AppBar (popup); destroyed when closed. */
     lv_obj_t *pane_mbox;

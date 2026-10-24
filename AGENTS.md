@@ -117,6 +117,22 @@ Moonlight on their eARC setup — Aurora's client PCM + RemapPcm51 path was wron
 | `surroundParams=642014523` in `session_worker.c` | Host advertises the mapping `IsOpusPassthroughSupported()` already expects | Required. Nulling it (v1.2.0–1.2.3) forced `opus_fix` re-encode and wrong speakers. |
 | NDL Opus passthrough | Opus preferred when SS4S advertises it and host mapping matches | Correct 5.1 on user's setup. Do **not** force client PCM or RemapPcm51. |
 
+Experimental → "5.1 audio mode" (`surround_51_mode`, default passthrough) holds the
+escape hatches for eARC bars where NDL Opus passthrough cuts out (#80):
+
+- **Re-encode** (forcing `opus_fix` with a matching host mapping) was tried and removed: no
+  cuts, but speakers as wrong as PCM — same as upstream 1.28 in mariotaku/moonlight-tv#506.
+- **PCM** stops the dropouts but is not discrete on an LG 5.1 bar: with the measured slots
+  FL RR FR RL C LFE, RL is silent and RR also plays from the front. FL FR SL SR C LFE swaps
+  fronts/rears; WAVE order silences the Sub. Kept only for other bars.
+
+Do not make PCM the default.
+
+**Cut root cause (#80):** C5/G5 logs showed ~45% of Opus packets stamped on the same ms as
+the previous one (Limelight delivers them in pairs). `audio_sequential_pts` (default on,
+`SS4S_NDL_AUDIO_SEQUENTIAL_PTS`) steps each stamp one frame past the last and sheds packets
+more than 4 frames ahead, so the stamp cannot ratchet. Watch `shed` in "Audio feed 1s".
+
 Do **not** send Sunshine `surround-params` a second time on top of `642014523`.
 Do not "fix" 5.1 by deleting `surroundParams` again.
 
@@ -137,6 +153,7 @@ ruled out, so nobody repeats it:
 | 4K 120 @ 270 Mbps | **accumulating delay** (USB2 + decode queue). 80 Mbps 4K is stable; 120 Mbps slight drift |
 | Bitrate 270 → below 100 Mbps (3.6K pan hitch) | no change |
 | 120 Hz vs 119.94 Hz | no change |
+| Host-clock cadence pacing (punktfunk-style: host PTS → NDL clock, p98 jitter cushion, +0–2 frames), with primed Opus audio plane | no change: PTS led arrival by up to 40 ms yet render queue stayed 0–2; C5 NDL HEVC presents on arrival. Removed |
 
 Facts that matter and are easy to get wrong:
 

@@ -7,6 +7,13 @@
 #include "lvgl/ext/lv_child_group.h"
 
 static lv_style_t knob_shadow;
+/* Short ease-out so focus moves feel immediate on the TV SoC; no shadows or layered opacity. */
+static lv_style_t focus_transition;
+static lv_style_transition_dsc_t focus_transition_dsc;
+static const lv_style_prop_t focus_transition_props[] = {
+        LV_STYLE_BG_COLOR, LV_STYLE_OUTLINE_OPA, LV_STYLE_OUTLINE_WIDTH,
+        LV_STYLE_TRANSFORM_WIDTH, LV_STYLE_TRANSFORM_HEIGHT, 0,
+};
 
 static void apply_cb(lv_theme_t *, lv_obj_t *);
 
@@ -20,6 +27,8 @@ static void msgbox_cancel(lv_event_t *event);
 
 static void msgbox_destroy(lv_event_t *event);
 
+static void backdrop_fade_in(lv_obj_t *backdrop);
+
 void lv_theme_moonlight_init(lv_theme_t *theme, const app_fonts_t *fonts, app_t *app) {
     lv_theme_set_apply_cb(theme, apply_cb);
     theme->user_data = app;
@@ -30,11 +39,15 @@ void lv_theme_moonlight_init(lv_theme_t *theme, const app_fonts_t *fonts, app_t 
     lv_style_set_shadow_color(&knob_shadow, lv_color_black());
     lv_style_set_shadow_width(&knob_shadow, LV_DPX(5));
     lv_style_set_shadow_opa(&knob_shadow, LV_OPA_50);
+    lv_style_transition_dsc_init(&focus_transition_dsc, focus_transition_props, lv_anim_path_ease_out, 110, 0, NULL);
+    lv_style_init(&focus_transition);
+    lv_style_set_transition(&focus_transition, &focus_transition_dsc);
 }
 
 void lv_theme_moonlight_deinit(lv_theme_t *theme) {
     (void) theme;
     lv_style_reset(&knob_shadow);
+    lv_style_reset(&focus_transition);
 }
 
 const lv_font_t *lv_theme_moonlight_get_iconfont_large(lv_obj_t *obj) {
@@ -59,16 +72,21 @@ static void apply_cb(lv_theme_t *theme, lv_obj_t *obj) {
         lv_obj_set_style_flex_cross_place(obj, LV_FLEX_ALIGN_CENTER, 0);
         lv_obj_t *parent = lv_obj_get_parent(obj);
         if (parent == NULL || !lv_obj_check_type(parent, &lv_msgbox_class)) {
-            lv_obj_set_style_radius(obj, LV_DPX(10), 0);
+            lv_obj_set_style_radius(obj, LV_DPX(12), 0);
             lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_SURFACE_ALT), 0);
             lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, 0);
+            lv_obj_set_style_shadow_width(obj, 0, 0);
             lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_SURFACE_HI), LV_STATE_PRESSED);
             lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_SURFACE_HI), LV_STATE_FOCUSED);
-            lv_obj_set_style_outline_color(obj, ml_color_hex(ML_COLOR_PRIMARY), LV_STATE_FOCUS_KEY);
+            /* One focus colour across the app (settings and launcher already use FOCUS). */
+            lv_obj_set_style_outline_color(obj, ml_color_hex(ML_COLOR_FOCUS), LV_STATE_FOCUS_KEY);
             lv_obj_set_style_outline_width(obj, LV_DPX(2), LV_STATE_FOCUS_KEY);
             lv_obj_set_style_outline_opa(obj, LV_OPA_COVER, LV_STATE_FOCUS_KEY);
             lv_obj_set_style_outline_pad(obj, LV_DPX(2), LV_STATE_FOCUS_KEY);
+            lv_obj_set_style_transform_width(obj, LV_DPX(2), LV_STATE_FOCUS_KEY);
+            lv_obj_set_style_transform_height(obj, LV_DPX(2), LV_STATE_FOCUS_KEY);
             lv_obj_set_style_text_color(obj, ml_color_hex(ML_COLOR_TEXT), 0);
+            lv_obj_add_style(obj, &focus_transition, 0);
         }
     }
     if (lv_obj_check_type(obj, &lv_obj_class) && lv_obj_get_parent(obj) != NULL) {
@@ -108,6 +126,8 @@ static void apply_cb(lv_theme_t *theme, lv_obj_t *obj) {
         lv_obj_set_style_text_color(obj, ml_color_hex(ML_COLOR_TEXT), 0);
         lv_obj_set_style_border_color(obj, ml_color_hex(ML_COLOR_BORDER), 0);
         lv_obj_set_style_border_width(obj, LV_DPX(1), 0);
+        lv_obj_set_style_radius(obj, LV_DPX(10), 0);
+        lv_obj_set_style_border_color(obj, ml_color_hex(ML_COLOR_FOCUS), LV_STATE_FOCUSED);
         lv_obj_add_event_cb(obj, lv_start_text_input, LV_EVENT_FOCUSED, theme);
         lv_obj_add_event_cb(obj, lv_stop_text_input, LV_EVENT_DEFOCUSED, theme);
     } else if (lv_obj_check_type(obj, &lv_msgbox_class)) {
@@ -119,6 +139,14 @@ static void apply_cb(lv_theme_t *theme, lv_obj_t *obj) {
         lv_obj_set_style_min_width(obj, LV_PCT(40), 0);
         lv_obj_set_style_max_width(obj, LV_PCT(60), 0);
         lv_obj_set_style_flex_main_place(obj, LV_FLEX_ALIGN_END, 0);
+        lv_obj_set_style_radius(obj, LV_DPX(20), 0);
+        lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_SURFACE), 0);
+        lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_color(obj, ml_color_hex(ML_COLOR_BORDER), 0);
+        lv_obj_set_style_border_width(obj, LV_DPX(1), 0);
+        lv_obj_set_style_shadow_width(obj, 0, 0);
+        lv_obj_set_style_pad_all(obj, LV_DPX(20), 0);
+        lv_obj_set_style_text_color(obj, ml_color_hex(ML_COLOR_TEXT), 0);
         lv_group_t *group = lv_group_create();
         group->user_data = theme;
         app_input_push_modal_group(&app->ui.input, group);
@@ -129,11 +157,23 @@ static void apply_cb(lv_theme_t *theme, lv_obj_t *obj) {
     } else if (lv_obj_check_type(obj, &lv_msgbox_backdrop_class)) {
         lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_BG), 0);
         lv_obj_set_style_bg_opa(obj, LV_OPA_70, 0);
+        backdrop_fade_in(obj);
     } else if (lv_obj_check_type(obj, &lv_btnmatrix_class)) {
         lv_obj_t *parent = lv_obj_get_parent(obj);
         if (lv_obj_check_type(parent, &lv_msgbox_class)) {
             lv_obj_set_style_text_font(obj, theme->font_small, 0);
             set_font = false;
+            /* Pill buttons; the focused one fills with the focus colour. */
+            lv_obj_set_style_pad_gap(obj, LV_DPX(10), 0);
+            lv_obj_set_style_radius(obj, LV_RADIUS_CIRCLE, LV_PART_ITEMS);
+            lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, LV_PART_ITEMS);
+            lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_SURFACE_HI), LV_PART_ITEMS);
+            lv_obj_set_style_text_color(obj, ml_color_hex(ML_COLOR_TEXT), LV_PART_ITEMS);
+            lv_obj_set_style_shadow_width(obj, 0, LV_PART_ITEMS);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_ITEMS);
+            lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_FOCUS), LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
+            lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_FOCUS), LV_PART_ITEMS | LV_STATE_PRESSED);
+            lv_obj_set_style_outline_width(obj, 0, LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
         }
     } else if (lv_obj_check_type(obj, &lv_dropdown_class)) {
         lv_obj_set_style_text_font(obj, lv_theme_moonlight_get_iconfont_large(obj), LV_PART_INDICATOR);
@@ -143,23 +183,44 @@ static void apply_cb(lv_theme_t *theme, lv_obj_t *obj) {
         lv_obj_set_style_text_color(obj, ml_color_hex(ML_COLOR_TEXT), 0);
         lv_obj_set_style_border_color(obj, ml_color_hex(ML_COLOR_BORDER), 0);
         lv_obj_set_style_border_width(obj, LV_DPX(1), 0);
+        lv_obj_set_style_radius(obj, LV_DPX(10), 0);
     } else if (lv_obj_check_type(obj, &lv_dropdownlist_class)) {
         lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_SURFACE), 0);
         lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, 0);
         lv_obj_set_style_border_color(obj, ml_color_hex(ML_COLOR_BORDER), 0);
         lv_obj_set_style_border_width(obj, LV_DPX(1), 0);
         lv_obj_set_style_text_color(obj, ml_color_hex(ML_COLOR_TEXT), 0);
+        lv_obj_set_style_radius(obj, LV_DPX(12), 0);
         lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_SURFACE_HI), LV_PART_SELECTED);
         lv_obj_set_style_text_color(obj, ml_color_hex(ML_COLOR_TEXT), LV_PART_SELECTED);
+        lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_PRIMARY_DIM), LV_PART_SELECTED | LV_STATE_CHECKED);
     } else if (lv_obj_check_type(obj, &lv_checkbox_class)) {
         lv_obj_set_style_text_font(obj, lv_theme_moonlight_get_iconfont_large(obj),
                                    LV_PART_INDICATOR | LV_STATE_CHECKED);
     } else if (lv_obj_check_type(obj, &lv_slider_class)) {
         lv_obj_add_style(obj, &knob_shadow, LV_PART_KNOB);
+        lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_PRIMARY), LV_PART_INDICATOR);
+        lv_obj_set_style_bg_color(obj, ml_color_hex(ML_COLOR_TEXT), LV_PART_KNOB);
     }
     if (set_font) {
         lv_obj_set_style_text_font(obj, theme->font_normal, 0);
     }
+}
+
+static void backdrop_opa_anim_cb(void *obj, int32_t value) {
+    lv_obj_set_style_bg_opa(obj, (lv_opa_t) value, 0);
+}
+
+/* Fading the backdrop (a flat fill) is cheap; fading the dialog itself would need a layer. */
+static void backdrop_fade_in(lv_obj_t *backdrop) {
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, backdrop);
+    lv_anim_set_values(&a, LV_OPA_TRANSP, LV_OPA_70);
+    lv_anim_set_time(&a, 140);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
+    lv_anim_set_exec_cb(&a, backdrop_opa_anim_cb);
+    lv_anim_start(&a);
 }
 
 static void lv_start_text_input(lv_event_t *event) {

@@ -24,6 +24,8 @@ typedef struct experimental_pane_t {
     int idr_refresh_slider_value;
     lv_obj_t *abr_dropdown;
     pref_dropdown_int_entry_t abr_entries[3];
+    pref_dropdown_int_entry_t audio_lead_entries[7];
+    pref_dropdown_int_entry_t surround_51_entries[2];
 #if FEATURE_I18N_LANGUAGE_SETTINGS
     pref_dropdown_string_entry_t lang_entries[16];
     int lang_entries_len;
@@ -72,6 +74,18 @@ static void pane_ctor(lv_fragment_t *self, void *args) {
     pane->abr_entries[0] = (pref_dropdown_int_entry_t) {locstr("Balanced"), 0, true};
     pane->abr_entries[1] = (pref_dropdown_int_entry_t) {locstr("Quality"), 1, false};
     pane->abr_entries[2] = (pref_dropdown_int_entry_t) {locstr("Low latency"), 2, false};
+    /* Deep entries test whether NDL drops packets it considers late (#80); each ms delays sound. */
+    pane->audio_lead_entries[0] = (pref_dropdown_int_entry_t) {"0 ms", 0, false};
+    pane->audio_lead_entries[1] = (pref_dropdown_int_entry_t) {"20 ms", 20, true};
+    pane->audio_lead_entries[2] = (pref_dropdown_int_entry_t) {"40 ms", 40, false};
+    pane->audio_lead_entries[3] = (pref_dropdown_int_entry_t) {"60 ms", 60, false};
+    pane->audio_lead_entries[4] = (pref_dropdown_int_entry_t) {"80 ms", 80, false};
+    pane->audio_lead_entries[5] = (pref_dropdown_int_entry_t) {"100 ms", 100, false};
+    pane->audio_lead_entries[6] = (pref_dropdown_int_entry_t) {"150 ms", 150, false};
+    pane->surround_51_entries[0] = (pref_dropdown_int_entry_t) {locstr("Off (Opus passthrough)"),
+                                                                 SURROUND_51_PASSTHROUGH, true};
+    pane->surround_51_entries[1] = (pref_dropdown_int_entry_t) {locstr("PCM (other soundbars)"),
+                                                                SURROUND_51_PCM, false};
 #if FEATURE_I18N_LANGUAGE_SETTINGS
     pane->lang_entries_len = 0;
     for (int i = 0; i18n_entry_at(i)->locale && pane->lang_entries_len < 16; i++) {
@@ -149,6 +163,31 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     lv_obj_add_event_cb(idr_checkbox, idr_checkbox_activate, LV_EVENT_CLICKED, pane);
     lv_obj_add_event_cb(idr_slider, idr_refresh_slider_cb, LV_EVENT_VALUE_CHANGED, pane);
     idr_refresh_state_update(pane);
+
+#if TARGET_WEBOS
+    pref_header(view, locstr("Audio"));
+    lv_obj_t *lead_row = pref_focus_row(view, locstr("Audio buffer (5.1 passthrough)"));
+    lv_obj_t *lead_dd = pref_dropdown_int(lead_row, pane->audio_lead_entries,
+                                          sizeof(pane->audio_lead_entries) / sizeof(pane->audio_lead_entries[0]),
+                                          &app_configuration->audio_lead_ms, NULL);
+    pref_style_inline_control(lead_dd);
+    pref_row_bind_control(lead_row, lead_dd);
+    lv_obj_add_event_cb(lead_dd, reconnect_cb, LV_EVENT_VALUE_CHANGED, pane);
+
+    lv_obj_t *pcm_row = pref_focus_row(view, locstr("5.1 audio mode"));
+    lv_obj_t *pcm_dd = pref_dropdown_int(pcm_row, pane->surround_51_entries,
+                                         sizeof(pane->surround_51_entries) / sizeof(pane->surround_51_entries[0]),
+                                         &app_configuration->surround_51_mode, NULL);
+    pref_style_inline_control(pcm_dd);
+    pref_row_bind_control(pcm_row, pcm_dd);
+    lv_obj_add_event_cb(pcm_dd, reconnect_cb, LV_EVENT_VALUE_CHANGED, pane);
+    pref_desc_label(view, locstr("PCM avoids cuts on some soundbars but may mix channels on LG bars."), false);
+
+    lv_obj_t *seq_pts = pref_checkbox(view, locstr("Sequential audio timestamps"),
+                                      &app_configuration->audio_sequential_pts, false);
+    lv_obj_add_event_cb(seq_pts, reconnect_cb, LV_EVENT_VALUE_CHANGED, pane);
+    pref_desc_label(view, locstr("Fixes 5.1 passthrough cutting out. Turn off only to compare."), false);
+#endif
 
     pref_header(view, locstr("Bitrate"));
 

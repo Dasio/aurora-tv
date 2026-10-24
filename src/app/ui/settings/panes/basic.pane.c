@@ -32,6 +32,8 @@ typedef struct {
 
     pref_dropdown_string_entry_t *vdec_entries;
     int vdec_entries_len;
+    pref_dropdown_string_entry_t *adec_entries;
+    int adec_entries_len;
 
     pref_dropdown_int_entry_t surround_entries[3];
     int surround_entries_len;
@@ -57,6 +59,8 @@ static void codec_checkbox_cb(lv_event_t *e);
 
 static void module_changed_cb(lv_event_t *e);
 
+static void backend_changed_cb(lv_event_t *e);
+
 const lv_fragment_class_t settings_pane_basic_cls = {
     .constructor_cb = pane_ctor,
     .destructor_cb = pane_dtor,
@@ -81,6 +85,15 @@ static void pane_ctor(lv_fragment_t *self, void *args) {
             set_decoder_entry(&pane->vdec_entries[pane->vdec_entries_len++], info->name, group, false);
         }
     }
+    pane->adec_entries = calloc(modules.size + 1, sizeof(pref_dropdown_string_entry_t));
+    set_decoder_entry(&pane->adec_entries[pane->adec_entries_len++], locstr("Auto"), "auto", true);
+    for (int module_idx = 0; module_idx < modules.size; module_idx++) {
+        const SS4S_ModuleInfo *info = array_list_get(&modules, module_idx);
+        const char *group = SS4S_ModuleInfoGetGroup(info);
+        if (info->has_audio && !contains_decoder_group(pane->adec_entries, pane->adec_entries_len, group)) {
+            set_decoder_entry(&pane->adec_entries[pane->adec_entries_len++], info->name, group, false);
+        }
+    }
 
     unsigned int supported_ch = app->ss4s.audio_cap.maxChannels;
     if (supported_ch < 6) {
@@ -102,6 +115,7 @@ static void pane_ctor(lv_fragment_t *self, void *args) {
 static void pane_dtor(lv_fragment_t *self) {
     basic_pane_t *pane = (basic_pane_t *) self;
     free(pane->vdec_entries);
+    free(pane->adec_entries);
 }
 
 static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
@@ -166,7 +180,7 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
                                                    &app_configuration->decoder);
     pref_style_inline_control(vdec_dropdown);
     pref_row_bind_control(vdec_row, vdec_dropdown);
-    lv_obj_add_event_cb(vdec_dropdown, module_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
+    lv_obj_add_event_cb(vdec_dropdown, backend_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
 
     lv_obj_t *hevc_checkbox = pref_checkbox(view, locstr("HEVC"), &app_configuration->hevc, false);
     pane->hevc_checkbox = hevc_checkbox;
@@ -194,6 +208,13 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     pref_style_inline_control(ch_dropdown);
     pref_row_bind_control(audio_row, ch_dropdown);
     lv_obj_add_event_cb(ch_dropdown, module_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
+
+    lv_obj_t *adec_row = pref_focus_row(view, locstr("Audio backend"));
+    lv_obj_t *adec_dropdown = pref_dropdown_string(adec_row, pane->adec_entries, pane->adec_entries_len,
+                                                   &app_configuration->audio_backend);
+    pref_style_inline_control(adec_dropdown);
+    pref_row_bind_control(adec_row, adec_dropdown);
+    lv_obj_add_event_cb(adec_dropdown, backend_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
 
     return view;
 }
@@ -254,4 +275,10 @@ static void module_changed_cb(lv_event_t *e) {
     settings_controller_t *parent = pane->parent;
     parent->needs_stream_reconnect = true;
     hdr_state_update(pane);
+}
+
+static void backend_changed_cb(lv_event_t *e) {
+    basic_pane_t *pane = lv_event_get_user_data(e);
+    pane->parent->needs_app_restart = true;
+    module_changed_cb(e);
 }
