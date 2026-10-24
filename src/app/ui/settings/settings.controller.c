@@ -9,6 +9,7 @@
 #include "lvgl/ext/lv_child_group.h"
 #include "lvgl/util/lv_app_utils.h"
 
+#include "util/bus.h"
 #include "util/user_event.h"
 #include "util/font.h"
 #include "util/i18n.h"
@@ -45,6 +46,8 @@ static const int entries_len = sizeof(entries) / sizeof(settings_entry_t);
 static void on_view_created(lv_fragment_t *self, lv_obj_t *view);
 
 static void on_destroy_view(lv_fragment_t *self, lv_obj_t *view);
+
+static void on_will_destroy_view(lv_fragment_t *self, lv_obj_t *view);
 
 static void on_entry_focus(lv_event_t *event);
 
@@ -104,6 +107,8 @@ static void stream_reconnect_confirm_cb(lv_event_t *e);
 
 static void locale_restart_confirm_cb(lv_event_t *e);
 
+static void backend_restart_confirm_cb(lv_event_t *e);
+
 static void settings_apply_locale_if_needed(settings_controller_t *controller);
 
 static void pane_child_added(lv_event_t *e);
@@ -158,6 +163,7 @@ const lv_fragment_class_t settings_controller_cls = {
         .constructor_cb = settings_controller_ctor,
         .create_obj_cb = settings_win_create,
         .obj_created_cb = on_view_created,
+        .obj_will_delete_cb = on_will_destroy_view,
         .obj_deleted_cb = on_destroy_view,
         .event_cb = on_event,
         .instance_size = sizeof(settings_controller_t),
@@ -259,6 +265,18 @@ static void on_view_created(lv_fragment_t *self, lv_obj_t *view) {
     }
 }
 
+static void on_will_destroy_view(lv_fragment_t *self, lv_obj_t *view) {
+    settings_controller_t *controller = (settings_controller_t *) self;
+    LV_UNUSED(view);
+    /* The inline pane is an unmanaged fragment inside this tree: delete it while its objects
+     * still exist. After the tree is gone, lv_fragment_del would touch freed objects (#86).
+     * Submenu rows in detail keep a fragment class in user_data, not a fragment. */
+    if (controller->embed_pane != NULL) {
+        lv_fragment_del(controller->embed_pane);
+        controller->embed_pane = NULL;
+    }
+}
+
 static void on_destroy_view(lv_fragment_t *self, lv_obj_t *view) {
     settings_controller_t *controller = (settings_controller_t *) self;
     LV_UNUSED(view);
@@ -268,19 +286,11 @@ static void on_destroy_view(lv_fragment_t *self, lv_obj_t *view) {
     }
     settings_save(app_configuration);
     settings_apply_locale_if_needed(controller);
+    /* Rebuilds the home grid once, and only if Game grid (or a reset) changed its layout. */
+    bus_pushevent(USER_LAUNCHER_GRID_CHANGED, NULL, NULL);
 
     if (controller->launcher_host) {
         settings_close_pane_popup(controller);
-        if (controller->detail) {
-            uint32_t n = lv_obj_get_child_cnt(controller->detail);
-            for (uint32_t i = 0; i < n; i++) {
-                lv_obj_t *ch = lv_obj_get_child(controller->detail, i);
-                lv_fragment_t *pane = lv_obj_get_user_data(ch);
-                if (pane != NULL) {
-                    lv_fragment_del(pane);
-                }
-            }
-        }
         app_input_remove_modal_group(&controller->app->ui.input, controller->detail_group);
         launcher_restore_nav_focus(controller->launcher_host);
         if (controller->detail_group) {
@@ -949,6 +959,11 @@ static bool detail_item_needs_lrkey(lv_obj_t *obj) {
 
 static void detail_defocus(settings_controller_t *controller, lv_event_t *e) {
     (void) e;
+    if (controller->launcher_host && controller->close_btn != NULL) {
+        lv_group_focus_obj(controller->close_btn);
+        lv_obj_add_state(controller->close_btn, LV_STATE_FOCUS_KEY);
+        return;
+    }
     lv_obj_t *detail_focused = lv_group_get_focused(controller->detail_group);
     if (detail_focused) {
         lv_event_send(detail_focused, LV_EVENT_DEFOCUSED, lv_indev_get_act());
@@ -1000,6 +1015,16 @@ static bool settings_try_close(settings_controller_t *fragment) {
         return true;
     }
 #endif
+    if (fragment->needs_app_restart) {
+        static const char *btn_txts[] = {translatable("Later"), translatable("Restart app"), ""};
+        lv_obj_t *msgbox = lv_msgbox_create_i18n(NULL, NULL,
+                                                 locstr("Audio and video backend changes take effect after "
+                                                        "restarting the app. Restart now?"),
+                                                 btn_txts, false);
+        lv_obj_center(msgbox);
+        lv_obj_add_event_cb(msgbox, backend_restart_confirm_cb, LV_EVENT_VALUE_CHANGED, fragment);
+        return true;
+    }
     if (fragment->needs_stream_reconnect && fragment->app->session != NULL && session_is_streaming(fragment->app->session)) {
         static const char *btn_txts[] = {translatable("Later"), translatable("Reconnect streaming"), ""};
         lv_obj_t *msgbox =
@@ -1037,6 +1062,18 @@ static void locale_restart_confirm_cb(lv_event_t *e) {
     lv_msgbox_close_async(msgbox);
     fragment->needs_locale_reapply = false;
     i18n_setlocale(app_configuration->language);
+    settings_finish_close(fragment);
+    if (restart) {
+        app_request_exit();
+    }
+}
+
+static void backend_restart_confirm_cb(lv_event_t *e) {
+    settings_controller_t *fragment = lv_event_get_user_data(e);
+    lv_obj_t *msgbox = lv_event_get_current_target(e);
+    const bool restart = lv_msgbox_get_active_btn(msgbox) == 1;
+    lv_msgbox_close_async(msgbox);
+    fragment->needs_app_restart = false;
     settings_finish_close(fragment);
     if (restart) {
         app_request_exit();
@@ -1129,6 +1166,7 @@ static bool settings_close_dropdown_on_back(settings_controller_t *c, lv_obj_t *
     }
     c->active_dropdown = NULL;
     c->suppress_pane_back = true;
+    c->suppress_pane_back_tick = lv_tick_get();
     if (lv_dropdown_is_open(dropdown)) {
         lv_dropdown_close(dropdown);
     }
@@ -1331,7 +1369,12 @@ static void settings_close_pane_popup_async_cb(void *user_data) {
     }
     if (c->suppress_pane_back) {
         c->suppress_pane_back = false;
-        return;
+        /* Swallow only the close that rode on the same Back press that shut a dropdown.
+         * Usually nothing follows (the dropdown stops the event), and a stale flag used
+         * to eat the next real close: X / Back had to be pressed twice. */
+        if (lv_tick_elaps(c->suppress_pane_back_tick) < 100) {
+            return;
+        }
     }
     lv_obj_t *mbox = c->pane_mbox;
     c->pane_mbox = NULL;
@@ -1690,7 +1733,8 @@ static lv_obj_t *embed_add_submenu_row(lv_obj_t *parent, settings_controller_t *
     lv_obj_align(lab, LV_ALIGN_LEFT_MID, text_x, 0);
 
     lv_obj_t *chev = lv_label_create(btn);
-    lv_label_set_text_static(chev, LV_SYMBOL_RIGHT);
+    lv_label_set_text_static(chev, MAT_SYMBOL_CHEVRON_RIGHT);
+    lv_obj_set_style_text_font(chev, lv_theme_moonlight_get_iconfont_normal(btn), 0);
     lv_obj_set_style_text_color(chev, ml_color_hex(ML_COLOR_TEXT_MUTED), 0);
     lv_obj_align(chev, LV_ALIGN_RIGHT_MID, 0, 0);
     return btn;
@@ -1706,7 +1750,10 @@ static void on_launcher_embedded_view_created(settings_controller_t *controller)
     lv_obj_add_event_cb(controller->detail, on_back_request, LV_EVENT_CANCEL, controller);
     lv_obj_add_event_cb(controller->detail, on_detail_key, LV_EVENT_KEY, controller);
 
-    lv_group_add_obj(controller->nav_group, controller->close_btn);
+    /* detail_group is pushed as the modal group, and a modal group always wins over
+     * app_input_set_group. The close button lives in it too (first, so Up from the first
+     * setting reaches it); in nav_group it only looked focused while OK went to the list. */
+    lv_group_add_obj(controller->detail_group, controller->close_btn);
     lv_obj_add_event_cb(controller->close_btn, embed_cancel_cb, LV_EVENT_CANCEL, controller);
 
     /* Main stream settings inline (punktfunk-style single list). */
@@ -1719,6 +1766,7 @@ static void on_launcher_embedded_view_created(settings_controller_t *controller)
     lv_fragment_t *pane = lv_fragment_create(&settings_pane_basic_cls, controller);
     lv_fragment_create_obj(pane, section);
     lv_obj_set_user_data(section, pane);
+    controller->embed_pane = pane;
     embed_popup_attach_key_handlers(section, controller);
     embed_popup_add_objs_recursive(section, controller->detail_group);
 

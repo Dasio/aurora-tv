@@ -27,9 +27,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define APPS_GRID_COLS 8
-#define APPS_GRID_ROWS 3
-
 typedef void (*action_cb_t)(apps_fragment_t *controller, lv_obj_t *buttons, uint16_t index);
 
 static lv_obj_t *apps_view(lv_fragment_t *self, lv_obj_t *container);
@@ -101,6 +98,10 @@ static void action_cb_host_reload(apps_fragment_t *controller, lv_obj_t *buttons
 static void action_cb_pair(apps_fragment_t *controller, lv_obj_t *buttons, uint16_t index);
 
 static void update_grid_config(apps_fragment_t *controller);
+
+static int apps_grid_columns(int rows);
+
+static void apps_rebuild_grid(apps_fragment_t *controller);
 
 static void open_context_menu(apps_fragment_t *fragment, appitem_viewholder_t *holder);
 
@@ -284,6 +285,13 @@ static void on_view_created(lv_fragment_t *self, lv_obj_t *view) {
         }
     }
     current_instance = controller;
+    if (controller->apploader_apps != NULL) {
+        /* View recreated by apps_rebuild_grid(): the fragment kept its list, so show it
+         * while the reload runs. update_view_state() leaves LOADING-with-a-list alone,
+         * which would otherwise keep an empty grid under the spinner and error panel. */
+        lv_gridview_set_data(controller->applist, controller->apploader_apps);
+        show_ok(controller);
+    }
     update_view_state(controller);
 }
 
@@ -310,7 +318,8 @@ static void update_grid_config(apps_fragment_t *controller) {
     if (view_h <= 0) {
         view_h = lv_disp_get_ver_res(NULL);
     }
-    const int col_count = APPS_GRID_COLS;
+    const int row_count = app_configuration->launcher_grid_rows;
+    const int col_count = apps_grid_columns(row_count);
     lv_coord_t pad_l = lv_obj_get_style_pad_left(applist, 0);
     lv_coord_t pad_r = lv_obj_get_style_pad_right(applist, 0);
     lv_coord_t pad_t = lv_obj_get_style_pad_top(applist, 0);
@@ -318,12 +327,11 @@ static void update_grid_config(apps_fragment_t *controller) {
     lv_coord_t gap_col = lv_obj_get_style_pad_column(applist, 0);
     lv_coord_t gap_row = lv_obj_get_style_pad_row(applist, 0);
 
-    /* Row height stays exactly what it was before (fit APPS_GRID_ROWS into the
-     * visible height) so the grid keeps the same overall tile height/scroll
-     * behavior as the pre-fix build. */
-    lv_coord_t row_height = (view_h - pad_t - pad_b - gap_row * (APPS_GRID_ROWS - 1)) / APPS_GRID_ROWS;
+    /* Fit row_count rows exactly into the visible height, so one page of the grid
+     * always shows whole rows whatever layout is selected. */
+    lv_coord_t row_height = (view_h - pad_t - pad_b - gap_row * (row_count - 1)) / row_count;
     if (row_height < LV_DPX(40)) {
-        row_height = LV_MAX(LV_DPX(40), view_h / APPS_GRID_ROWS);
+        row_height = LV_MAX(LV_DPX(40), view_h / row_count);
     }
 
     /* Cover art assets are 600x800 (3:4, width:height). Derive the item *width*
@@ -341,14 +349,50 @@ static void update_grid_config(apps_fragment_t *controller) {
     if (col_width < LV_DPX(40)) {
         col_width = LV_DPX(40);
     }
+    /* When the width cap wins (3 × 1 at 1080p gives 592 px instead of 672), shrink the
+     * tile back to 3:4 instead of letterboxing the cover inside a tall tile.
+     * LV_GRID_ALIGN_CENTER centers it in the row. */
+    lv_coord_t item_height = LV_MIN(row_height, col_width * 800 / 600);
     controller->col_count = col_count;
     controller->col_width = col_width;
-    controller->col_height = row_height;
+    controller->col_height = item_height;
     lv_obj_set_size(applist, LV_PCT(100), LV_PCT(100));
     lv_gridview_set_config(applist, col_count, row_height, LV_GRID_ALIGN_CENTER, LV_GRID_ALIGN_CENTER);
 
     controller->appitem_style.defcover_src.header.w = col_width;
-    controller->appitem_style.defcover_src.header.h = row_height;
+    controller->appitem_style.defcover_src.header.h = item_height;
+}
+
+/* Columns for each row count (Settings > Game grid; keep the labels in basic.pane.c in
+ * sync). 8 × 3 is the original layout. 5 and 3 are the column counts whose 3:4 covers
+ * come closest to filling a 16:9 screen at 2 and 1 rows. */
+static int apps_grid_columns(int rows) {
+    switch (rows) {
+        case 1:
+            return 3;
+        case 2:
+            return 5;
+        default:
+            return 8;
+    }
+}
+
+/* lv_gridview cannot change its column count in place (clear_rows() skips the last
+ * bound row and never recycles the focused item, so those keep their old grid cells),
+ * and appitem_view() sizes each tile only once. Recreate the whole view instead; the
+ * fragment keeps its app list and show_ok() restores the focused game. */
+static void apps_rebuild_grid(apps_fragment_t *controller) {
+    launcher_fragment_t *launcher = (launcher_fragment_t *) lv_fragment_get_parent(&controller->base);
+    int focused = lv_gridview_get_focused_index(controller->applist);
+    if (focused >= 0) {
+        controller->focus_backup = focused;
+    }
+    /* This runs after Settings closed and gave focus back to the top bar. Deleting the
+     * old view can focus the spinner in detail_group, and the launcher's FOCUSED handler
+     * would then pull input down to the grid. */
+    launcher->detail_changing = true;
+    lv_fragment_recreate_obj(&controller->base);
+    launcher->detail_changing = false;
 }
 
 static void on_destroy_view(lv_fragment_t *self, lv_obj_t *view) {
@@ -367,6 +411,12 @@ static bool on_event(lv_fragment_t *self, int code, void *userdata) {
         case USER_SIZE_CHANGED: {
             update_grid_config(controller);
             lv_gridview_rebind(controller->applist);
+            break;
+        }
+        case USER_LAUNCHER_GRID_CHANGED: {
+            if (controller->col_count != apps_grid_columns(app_configuration->launcher_grid_rows)) {
+                apps_rebuild_grid(controller);
+            }
             break;
         }
         case USER_SHOW_HIDDEN_APPS: {
@@ -912,9 +962,9 @@ static void app_detail_dialog(apps_fragment_t *fragment, const apploader_item_t 
     lv_obj_t *msgbox = lv_msgbox_create_i18n(NULL, app->base.name, "text", btn_txts, false);
     lv_obj_t *msgobj = lv_msgbox_get_text(msgbox);
     lv_label_set_text_fmt(msgobj,
-                          "ID: %d\n"
-                          "Support HDR: %s",
-                          app->base.id, app->base.hdr ? "Yes" : "No");
+                          locstr("ID: %d\n"
+                                 "Support HDR: %s"),
+                          app->base.id, app->base.hdr ? locstr("Yes") : locstr("No"));
     lv_obj_center(msgbox);
     lv_obj_add_event_cb(msgbox, app_detail_click_cb, LV_EVENT_CLICKED, NULL);
 }

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #include <opus_multistream.h>
@@ -9,6 +10,9 @@
 #include "stream/session_priv.h"
 #include "logging.h"
 #include "config.h"
+#include "app.h"
+#include "app_settings.h"
+#include "util/i18n.h"
 
 #define SAMPLES_PER_FRAME  240
 
@@ -48,7 +52,15 @@ static int aud_init(int audioConfiguration, const POPUS_MULTISTREAM_CONFIGURATIO
                          opusConfig->mapping[0], opusConfig->mapping[1], opusConfig->mapping[2],
                          opusConfig->mapping[3], opusConfig->mapping[4], opusConfig->mapping[5]);
     }
-    if (session->audio_cap.codecs & SS4S_AUDIO_OPUS &&
+    int pcm_layout = SURROUND_51_PASSTHROUGH;
+#if TARGET_WEBOS
+    /* Opt-in escape hatch (#80): NDL Opus 5.1 cuts out on some eARC bars while PCM does not.
+     * Passthrough stays the default because it is the verified 5.1 speaker mapping. */
+    if (opusConfig->channelCount == 6 && app_configuration != NULL) {
+        pcm_layout = app_configuration->surround_51_mode;
+    }
+#endif
+    if (pcm_layout == SURROUND_51_PASSTHROUGH && session->audio_cap.codecs & SS4S_AUDIO_OPUS &&
         SS4S_GetAudioPreferredCodecs(&info) & SS4S_AUDIO_OPUS) {
         codec = SS4S_AUDIO_OPUS;
         decoder = NULL;
@@ -60,8 +72,23 @@ static int aud_init(int audioConfiguration, const POPUS_MULTISTREAM_CONFIGURATIO
         codecDataLen = opus_head_serialize(opusConfig, buffer);
     } else {
         int rc;
+        /* Decoding with the host's own mapping yields WAVE order (FL FR C LFE SL SR) whatever
+         * mapping the host chose. Output channel i is mapping[i], so permuting the mapping
+         * reorders the PCM for free. */
+        unsigned char mapping[AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
+        memcpy(mapping, opusConfig->mapping, sizeof(mapping));
+        if (pcm_layout == SURROUND_51_PCM) {
+            /* NDL slots FL RR FR RL C LFE, from WAVE FL(0) FR(1) C(2) LFE(3) RL(4) RR(5). */
+            mapping[0] = opusConfig->mapping[0];
+            mapping[1] = opusConfig->mapping[5];
+            mapping[2] = opusConfig->mapping[1];
+            mapping[3] = opusConfig->mapping[4];
+            mapping[4] = opusConfig->mapping[2];
+            mapping[5] = opusConfig->mapping[3];
+            commons_log_info("Session", "5.1 decoded in client, PCM slots FL RR FR RL C LFE");
+        }
         decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams,
-                                                  opusConfig->coupledStreams, opusConfig->mapping, &rc);
+                                                  opusConfig->coupledStreams, mapping, &rc);
         if (rc != 0) {
             return rc;
         }
@@ -77,7 +104,7 @@ static int aud_init(int audioConfiguration, const POPUS_MULTISTREAM_CONFIGURATIO
     audio_stream_info.format = SS4S_AudioCodecName(codec);
     switch (audioConfiguration) {
         case AUDIO_CONFIGURATION_STEREO:
-            audio_stream_info.channels = "Stereo";
+            audio_stream_info.channels = locstr("Stereo");
             break;
         case AUDIO_CONFIGURATION_51_SURROUND:
             audio_stream_info.channels = "5.1ch";
@@ -86,7 +113,7 @@ static int aud_init(int audioConfiguration, const POPUS_MULTISTREAM_CONFIGURATIO
             audio_stream_info.channels = "7.1ch";
             break;
         default:
-            audio_stream_info.channels = "Unknown";
+            audio_stream_info.channels = locstr("Unknown");
             break;
     }
     info.codec = codec;

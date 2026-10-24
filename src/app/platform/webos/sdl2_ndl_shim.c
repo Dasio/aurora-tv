@@ -158,7 +158,8 @@ int SDL_webOSSetExportedWindow(const char *window_id, ShimRect *src, ShimRect *d
     int hh = 0;
     void *window;
 
-    if (window_id != NULL && window_id[0] != '\0') {
+    /* Callers pass last_window_id itself; strncpy onto itself is undefined. */
+    if (window_id != NULL && window_id[0] != '\0' && window_id != last_window_id) {
         strncpy(last_window_id, window_id, sizeof(last_window_id) - 1);
         last_window_id[sizeof(last_window_id) - 1] = '\0';
     }

@@ -401,6 +401,12 @@ msgstr "Não envia mouse, teclado ou controle para o computador host."
 msgid "Capture system keys"
 msgstr "Capturar teclas do sistema"
 
+msgid "Send Home button to the computer"
+msgstr "Enviar botão Home para o computador"
+
+msgid "On: the remote's Home button works as the Windows Home key during a stream. Off: it opens the TV home screen."
+msgstr "Ligado: o botão Home do controle funciona como a tecla Home do Windows durante o stream. Desligado: abre a tela inicial da TV."
+
 #: src/app/ui/settings/panes/input.pane.c:50
 msgid "Capture and send system keys (e.g. Meta/Win key) to host computer."
 msgstr "Capturar e enviar teclas do sistema (ex.: tecla Win/Meta) ao computador host."
@@ -915,3 +921,34 @@ msgstr "total"
 msgid "not available"
 msgstr "indisponível"
 
+
+msgid "Audio and video backend changes take effect after restarting the app. Restart now?"
+msgstr "Mudanças no backend de áudio e vídeo só valem após reiniciar o app. Reiniciar agora?"
+
+msgid "Audio buffer (5.1 passthrough)"
+msgstr "Buffer de áudio (5.1 passthrough)"
+
+
+msgid "5.1 audio mode"
+msgstr "Modo de áudio 5.1"
+
+msgid "Off (Opus passthrough)"
+msgstr "Desligado (passthrough Opus)"
+
+msgid "PCM (other soundbars)"
+msgstr "PCM (outras soundbars)"
+
+msgid "PCM avoids cuts on some soundbars but may mix channels on LG bars."
+msgstr "O PCM evita cortes em algumas soundbars, mas pode misturar canais em soundbars LG."
+
+msgid "Sequential audio timestamps"
+msgstr "Carimbos de áudio sequenciais"
+
+msgid "Fixes 5.1 passthrough cutting out. Turn off only to compare."
+msgstr "Corrige os cortes do 5.1 em passthrough. Desligue só para comparar."
+
+msgid "Online"
+msgstr "Online"
+
+msgid "Playing"
+msgstr "Em jogo"

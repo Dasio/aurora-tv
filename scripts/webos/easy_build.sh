@@ -45,14 +45,21 @@ _sdk_root="$(dirname "$(dirname "$(dirname "${TOOLCHAIN_FILE}")")")"
 _webos_gcc="${_sdk_root}/bin/arm-webos-linux-gnueabi-gcc"
 _webos_gxx="${_sdk_root}/bin/arm-webos-linux-gnueabi-g++"
 if [ -x "${_webos_gcc}" ]; then
+  # Fail here rather than in CMake's compiler check: the SDK host tools need glibc >= 2.36.
+  if ! _gcc_err="$("${_webos_gcc}" --version 2>&1 >/dev/null)"; then
+    echo "webOS compiler does not run on this host: ${_webos_gcc}"
+    echo "${_gcc_err}"
+    echo "The SDK needs glibc >= 2.36 on the build host (Ubuntu 24.04+ / Debian 12+)."
+    exit 1
+  fi
   BUILD_OPTIONS="${BUILD_OPTIONS} -DCMAKE_C_COMPILER=${_webos_gcc}"
 fi
 if [ -x "${_webos_gxx}" ]; then
   BUILD_OPTIONS="${BUILD_OPTIONS} -DCMAKE_CXX_COMPILER=${_webos_gxx}"
 fi
 
-# shellcheck disable=SC2068,SC2086
-$CMAKE_BIN -B"${CMAKE_BINARY_DIR}" -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" $BUILD_OPTIONS $@ || exit 1
+# shellcheck disable=SC2086
+$CMAKE_BIN -B"${CMAKE_BINARY_DIR}" -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" $BUILD_OPTIONS "$@" || exit 1
 
 if command -v nproc &>/dev/null; then
   CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)

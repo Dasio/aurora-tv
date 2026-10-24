@@ -360,7 +360,12 @@ int vdec_delegate_submit(PDECODE_UNIT decodeUnit) {
     if (decodeUnit->frameType == FRAME_TYPE_IDR) {
         flags |= SS4S_VIDEO_FEED_DATA_KEYFRAME;
     }
-    SS4S_VideoFeedResult result = SS4S_PlayerVideoFeed(player, buffer, length, flags);
+    /* Host capture PTS. Modules use it only when a host-clock pacer is enabled; the NDL
+     * frame diagnostics always record it. */
+    const int64_t pts_us = decodeUnit->presentationTimeUs > 0
+                           ? (int64_t) decodeUnit->presentationTimeUs
+                           : (int64_t) -1;
+    SS4S_VideoFeedResult result = SS4S_PlayerVideoFeedWithPTS(player, buffer, length, flags, pts_us);
     return vdec_finish_feed(result, decodeUnit);
 }
 

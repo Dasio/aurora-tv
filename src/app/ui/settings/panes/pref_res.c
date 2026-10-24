@@ -88,7 +88,7 @@ lv_obj_t *pref_dropdown_res(lv_obj_t *parent, int native_w, int native_h, int ma
 
         const char *tag = built_in_resolutions[i].tag;
         if (builtin_w == native_w && builtin_h == native_h) {
-            snprintf(label_buf, sizeof(label_buf), "%d * %d (Native)", builtin_w, builtin_h);
+            snprintf(label_buf, sizeof(label_buf), "%d * %d (%s)", builtin_w, builtin_h, locstr("Native"));
         } else if (tag != NULL) {
             snprintf(label_buf, sizeof(label_buf), "%d * %d (%s)", builtin_w, builtin_h, tag);
         } else {
@@ -105,7 +105,7 @@ lv_obj_t *pref_dropdown_res(lv_obj_t *parent, int native_w, int native_h, int ma
             using_custom = false; // If the current values match the native resolution, we're not using custom
         }
 
-        snprintf(label_buf, sizeof(label_buf), "%d * %d (Native)", native_w, native_h);
+        snprintf(label_buf, sizeof(label_buf), "%d * %d (%s)", native_w, native_h, locstr("Native"));
         entries[num_entries].name = strdup(label_buf);
         entries[num_entries].value_a = native_w;
         entries[num_entries].value_b = native_h;

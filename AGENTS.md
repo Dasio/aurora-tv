@@ -28,7 +28,8 @@ cmake --build build
 ```
 
 webOS, from Windows via WSL (this is the path that is actually used here — it downloads
-and caches the buildroot NDK on first run):
+and caches the buildroot NDK on first run). The distro must be Ubuntu 24.04+; use
+`-d Ubuntu-24.04` if your `Ubuntu` distro is older:
 
 ```bash
 wsl -d Ubuntu -- python3 /mnt/c/.../scripts/webos/run_wsl_build.py RelWithDebInfo
@@ -36,6 +37,9 @@ wsl -d Ubuntu -- python3 /mnt/c/.../scripts/webos/run_wsl_build.py RelWithDebInf
 
 Gotchas:
 
+- The NDK (`2026.08-webos`, gcc 16) needs glibc ≥ 2.36 on the build host: Ubuntu 24.04+,
+  not 22.04. Every NDK release ships the same archive and directory name, so local SDK
+  caches are keyed by version — keep it that way when bumping the tag.
 - `gettext` (msgfmt) is a hard configure-time `FATAL_ERROR` for non-webOS builds
   (`cmake/MoonlightI18n.cmake`). webOS builds skip gettext and convert `.po` →
   `cstrings.json` at package time via `scripts/webos/po2json.awk`.
@@ -85,6 +89,11 @@ Cross-cutting mechanics worth knowing before touching anything:
   the RTP receive thread. Anything that blocks in the feed path stops the socket from
   being drained. Audio deliberately does *not* set it on webOS, because the NDL Opus 5.1
   transcode is expensive enough to starve reception (issue #66).
+- **Game grid** (`launcher/apps.controller.c`): `lv_gridview` cannot change its column count
+  in place (`clear_rows()` skips the last row and the focused item), and `appitem_view()`
+  sizes tiles only once. So when the "Game grid" setting (`launcher_grid_rows`) changes,
+  Settings sends `USER_LAUNCHER_GRID_CHANGED` on close and the apps fragment recreates
+  its view.
 
 ## Settings — the part that will bite you
 
@@ -98,10 +107,78 @@ global `app_configuration` aliases `&app->settings`.
 Stream (`basic.pane.c`), Input, Host and Experimental. A pane that is compiled but not
 in `entries[]` is dead UI; a setting placed there is invisible with no build error.
 This fork already lost `video.pane.c` and `audio.pane.c` to exactly that (deleted).
-New or experimental settings belong in `experimental.pane.c`.
+Experimental settings belong in `experimental.pane.c`. Settings users should find right
+away go in `basic.pane.c`: the launcher's settings overlay shows it inline as the main
+list, and Input/Host/Experimental only as submenu rows below it.
+
+Settings are stored in `aurora.ini` in the config dir (`CONF_NAME_SETTINGS`). Builds before
+the rename used `moonlight.ini`; `settings_read()` moves it to `aurora.ini` once, if
+`aurora.ini` does not exist yet.
 
 Retired INI keys are collected in a shared "legacy keys ignored" branch in
 `app_settings.c` so old config files don't warn — add to it rather than dropping the key.
+
+## Translations (i18n)
+
+Two backends behind `locstr()` (`util/i18n.h`): desktop uses gettext
+(`platform/common/i18n_gettext.c`, `.mo` built by `msgfmt`); webOS uses libwebosi18n's
+`ResBundle` (`platform/webos/i18n_webos.c`) on `cstrings.json` files that
+`scripts/webos/po2json.awk` generates at package time. po2json skips empty `msgstr`, so an
+untranslated string just falls back to English.
+
+**A language only ships when three names agree**: the `src/i18n/<code>/` directory, its
+entry in `I18N_LOCALES` (root `CMakeLists.txt`), and its `i18n_locales[]` code in
+`i18n_common.c`. Upstream moonlight-tv never showed Spanish with "System Language" because
+`es-ES` was missing from `I18N_LOCALES` and the entry was `es`. This fork fixed that in
+v1.2.9 (`d9ae5edc`). `PackageWebOS.cmake` installs `es-ES` as `resources/es/ES/cstrings.json`.
+
+Locale resolution on webOS (verified against webosose/libwebosi18n
+`ResBundle::loadAllTranslations`):
+
+- `resBundle_createWithRootPath(locale, "cstrings.json", root)` appends `/resources` itself
+  and merges `<root>/resources/<lang>/` and `<root>/resources/<lang>/<region>/`.
+- `app_init_locale` (`app_webos.c`) reads `localeInfo.locales.UI` from
+  `com.webos.settingsservice/getSystemSettings`, then falls back to `SDL_GetPreferredLocales`
+  and then `$LANG`. Every tag goes through `i18n_entry()`: an exact match wins, otherwise
+  any `xx-YY` entry with the same language does, so `es-MX` loads `es-ES`.
+- `bundle_is_translated()` rejects a catalog unless `[Localized Language]` or `Cancel` is
+  translated. Keep both translated in every `.po`. `[Localized Language]` is the language's
+  own name (`Español (España)`), not a literal translation of the words.
+
+**Extraction traps** — xgettext only picks up `locstr("...")` and `translatable("...")` with
+a literal argument:
+
+- A literal that reaches `locstr(var)` through a variable (option tables, button arrays for
+  `lv_msgbox_create_i18n`) must be wrapped in `translatable()` where it is defined.
+  Otherwise it is never extracted and stays English with no build error.
+- `streaming_error()` and `app_fatal_error()` translate their format and title internally.
+  Pass `translatable("...")` at the call site. `streaming_error(s, code, "")` clears the
+  message and must not reach `locstr` (`gettext("")` returns the `.po` header).
+- Translated format strings must keep the same conversion specifiers in the same order.
+- Debug-only text (log overlay, compact stats tokens like `RTT`/`FD`, soft-keyboard key caps)
+  is intentionally left in English.
+
+**Runtime costs**: on webOS `resBundle_getLocString` returns a fresh `strdup` that
+`locstr()` never frees. Keep `locstr` out of per-frame paths, and translate once per
+session, like `session_audio.c` does for the channel label. The detailed stats panel
+already leaks a few bytes per ~1 Hz refresh (`locstr("total")`, `locstr("not available")`).
+`locstr` is called from worker threads (connection callbacks, session worker). Both
+backends do a read-only lookup there, so that is safe.
+
+Updating catalogs:
+
+```bash
+cmake --build build --target i18n-update-pot   # xgettext over src/, needs gettext
+msgmerge --update src/i18n/<lang>/messages.po src/i18n/messages.pot
+```
+
+The `i18n-merge-po` target only merges `ja`, so don't rely on it. Until 2026-10 the `.pot`
+was stale and still carried strings from the deleted video/audio panes. Since then `es-ES`
+is complete (209/209). The rest only partly cover the current `.pot` (pt-BR 105, fr 87,
+zh-CN 80, others fewer; ko/uk/zh-TW 0) and are not merged against it yet.
+Spanish (Spain) conventions: formal *usted*; "transmisión" for streaming; "mando" for
+gamepad and "mando a distancia" for the remote; "ratón"; "ordenador"; `«»` quotes; "host"
+left as is. Long Spanish labels can overflow TV rows, so check them on the device.
 
 ## 5.1 audio (C5 + eARC) — verified, do not invert
 
@@ -116,6 +193,22 @@ Moonlight on their eARC setup — Aurora's client PCM + RemapPcm51 path was wron
 |------|----------------|--------|
 | `surroundParams=642014523` in `session_worker.c` | Host advertises the mapping `IsOpusPassthroughSupported()` already expects | Required. Nulling it (v1.2.0–1.2.3) forced `opus_fix` re-encode and wrong speakers. |
 | NDL Opus passthrough | Opus preferred when SS4S advertises it and host mapping matches | Correct 5.1 on user's setup. Do **not** force client PCM or RemapPcm51. |
+
+Experimental → "5.1 audio mode" (`surround_51_mode`, default passthrough) holds the
+escape hatches for eARC bars where NDL Opus passthrough cuts out (#80):
+
+- **Re-encode** (forcing `opus_fix` with a matching host mapping) was tried and removed: no
+  cuts, but speakers as wrong as PCM — same as upstream 1.28 in mariotaku/moonlight-tv#506.
+- **PCM** stops the dropouts but is not discrete on an LG 5.1 bar: with the measured slots
+  FL RR FR RL C LFE, RL is silent and RR also plays from the front. FL FR SL SR C LFE swaps
+  fronts/rears; WAVE order silences the Sub. Kept only for other bars.
+
+Do not make PCM the default.
+
+**Cut root cause (#80):** C5/G5 logs showed ~45% of Opus packets stamped on the same ms as
+the previous one (Limelight delivers them in pairs). `audio_sequential_pts` (default on,
+`SS4S_NDL_AUDIO_SEQUENTIAL_PTS`) steps each stamp one frame past the last and sheds packets
+more than 4 frames ahead, so the stamp cannot ratchet. Watch `shed` in "Audio feed 1s".
 
 Do **not** send Sunshine `surround-params` a second time on top of `642014523`.
 Do not "fix" 5.1 by deleting `surroundParams` again.
@@ -137,6 +230,7 @@ ruled out, so nobody repeats it:
 | 4K 120 @ 270 Mbps | **accumulating delay** (USB2 + decode queue). 80 Mbps 4K is stable; 120 Mbps slight drift |
 | Bitrate 270 → below 100 Mbps (3.6K pan hitch) | no change |
 | 120 Hz vs 119.94 Hz | no change |
+| Host-clock cadence pacing (punktfunk-style: host PTS → NDL clock, p98 jitter cushion, +0–2 frames), with primed Opus audio plane | no change: PTS led arrival by up to 40 ms yet render queue stayed 0–2; C5 NDL HEVC presents on arrival. Removed |
 
 Facts that matter and are easy to get wrong:
 

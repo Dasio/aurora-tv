@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
-set(MOONLIGHT_VERSION "1.3.1")
+set(MOONLIGHT_VERSION "1.3.2")
 
 project(moonlight VERSION ${MOONLIGHT_VERSION} LANGUAGES C CXX)
 
@@ -100,7 +100,8 @@ if (TARGET_WEBOS)
     set(CMAKE_THREAD_LIBS_INIT "-lpthread" CACHE INTERNAL "webOS pthread")
     set(OS_LINUX TRUE)
 
-    set(WEBOS_APPINFO_ID "com.aurora.gamestream")
+    set(WEBOS_APPINFO_ID "com.aurora.gamestream" CACHE STRING "webOS app id (override for a side-by-side test build, e.g. com.aurora.gamestream.dev)")
+    set(WEBOS_APPINFO_TITLE "Aurora" CACHE STRING "webOS app title/label shown on the Home screen")
     set(CMAKE_INSTALL_RPATH "$ORIGIN/lib/backports:$ORIGIN/../lib/backports:$ORIGIN")
 elseif (TARGET_STEAMLINK)
     set(OS_LINUX TRUE)

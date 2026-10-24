@@ -5,6 +5,7 @@
 #include "logging.h"
 #include "errors.h"
 #include "util/user_event.h"
+#include "util/i18n.h"
 #include "input/input_gamepad.h"
 #include "stream/connection/session_connection.h"
 #include "stream/audio/session_audio.h"
@@ -17,6 +18,7 @@
 #if TARGET_WEBOS
 #include "platform/webos/game_mode.h"
 #include "platform/webos/stream_priority.h"
+#include "platform/webos/bt_sniff.h"
 #endif
 
 #include <stdlib.h>
@@ -24,7 +26,7 @@
 
 #if TARGET_WEBOS
 /* Installer greps this string out of the ELF. */
-static const char aurora_build_tag[] __attribute__((used)) = "aurora-v1.3.0";
+static const char aurora_build_tag[] __attribute__((used)) = "aurora-v1.3.2";
 #endif
 
 int session_worker(session_t *session) {
@@ -38,6 +40,7 @@ int session_worker(session_t *session) {
 #if TARGET_WEBOS
     webos_game_mode_state_t *game_mode_state = NULL;
     webos_stream_priority_state_t *stream_prio = NULL;
+    webos_bt_sniff_state_t *bt_sniff = NULL;
     session->webos_game_mode = NULL;
 #endif
 
@@ -50,6 +53,8 @@ int session_worker(session_t *session) {
 #if TARGET_WEBOS
     /* USB/net buffers must land before UDP sockets (LiStartConnection). */
     stream_prio = webos_stream_priority_enter();
+    /* Bluetooth pads batch input at ~77 ms in sniff mode; hold them awake while streaming. */
+    bt_sniff = webos_bt_sniff_enter();
 #endif
 
     commons_log_info("Session", "Launch app %d (host currentGame=%d)...", appId, server->currentGame);
@@ -99,9 +104,9 @@ int session_worker(session_t *session) {
         const char *gs_error = NULL;
         gs_get_error(&gs_error);
         if (gs_error) {
-            streaming_error(session, ret, "Failed to launch session: %s (code %d)", gs_error, ret);
+            streaming_error(session, ret, translatable("Failed to launch session: %s (code %d)"), gs_error, ret);
         } else {
-            streaming_error(session, ret, "Failed to launch session: gamestream returned %d", ret);
+            streaming_error(session, ret, translatable("Failed to launch session: gamestream returned %d"), ret);
         }
         commons_log_error("Session", "Failed to launch session: gamestream returned %d, gs_error=%s", ret, gs_error);
         goto thread_cleanup;
@@ -125,6 +130,11 @@ int session_worker(session_t *session) {
     setenv("SS4S_NDL_SMOOTH_PACING", "0", 1);
     setenv("SS4S_PANEL_PHASE_PACING", "0", 1);
     setenv("SS4S_PAUSE_AT_DECODE_TIME", "0", 1);
+    /* NDL Opus plane jitter slack; read by the NDL module when audio opens. */
+    char audio_lead[8];
+    snprintf(audio_lead, sizeof(audio_lead), "%d", app_configuration->audio_lead_ms);
+    setenv("SS4S_NDL_AUDIO_LEAD_MS", audio_lead, 1);
+    setenv("SS4S_NDL_AUDIO_SEQUENTIAL_PTS", app_configuration->audio_sequential_pts ? "1" : "0", 1);
 #endif
 
     int startResult = LiStartConnection(&server->serverInfo, &session->config.stream,
@@ -134,20 +144,21 @@ int session_worker(session_t *session) {
         session_set_state(session, STREAMING_ERROR);
         switch (startResult) {
             case CALLBACKS_SESSION_ERROR_VDEC_UNSUPPORTED:
-                streaming_error(session, GS_WRONG_STATE, "Unsupported video codec.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Unsupported video codec."));
                 break;
             case CALLBACKS_SESSION_ERROR_VDEC_ERROR:
-                streaming_error(session, GS_WRONG_STATE, "Failed to open video decoder.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Failed to open video decoder."));
                 break;
             case CALLBACKS_SESSION_ERROR_ADEC_UNSUPPORTED:
-                streaming_error(session, GS_WRONG_STATE, "Unsupported audio codec.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Unsupported audio codec."));
                 break;
             case CALLBACKS_SESSION_ERROR_ADEC_ERROR:
-                streaming_error(session, GS_WRONG_STATE, "Failed to open audio backend.");
+                streaming_error(session, GS_WRONG_STATE, translatable("Failed to open audio backend."));
                 break;
             default: {
                 if (!streaming_errno) {
-                    streaming_error(session, GS_WRONG_STATE, "Failed to start connection: Limelight returned %d (%s)",
+                    streaming_error(session, GS_WRONG_STATE,
+                                    translatable("Failed to start connection: Limelight returned %d (%s)"),
                                     startResult, strerror(startResult));
                 }
                 break;
@@ -209,6 +220,8 @@ int session_worker(session_t *session) {
     game_mode_state = NULL;
     webos_stream_priority_leave(stream_prio);
     stream_prio = NULL;
+    webos_bt_sniff_leave(bt_sniff);
+    bt_sniff = NULL;
 #endif
     /* Restore only on a clean exit: streaming_errno != GS_OK means the session
      * ended in error/disconnect and the host is likely unreachable -- the

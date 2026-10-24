@@ -1,6 +1,7 @@
 #include "ui/streaming/streaming.controller.h"
 #include "stream/input/session_input.h"
 
+#include "util/bus.h"
 #include "util/i18n.h"
 #include "logging.h"
 #include "input/input_gamepad.h"
@@ -17,7 +18,7 @@ static void connection_terminated(int errorCode) {
         session_interrupt(current_session, false, STREAMING_INTERRUPT_HOST);
     } else {
         commons_log_error("Session", "Connection terminated, errorCode = 0x%x", errorCode);
-        streaming_error(current_session, 0, "Connection terminated, errorCode = 0x%x", errorCode);
+        streaming_error(current_session, 0, translatable("Connection terminated, errorCode = 0x%x"), errorCode);
         session_interrupt(current_session, false, STREAMING_INTERRUPT_NETWORK);
     }
 }
@@ -29,18 +30,25 @@ static void connection_log_message(const char *format, ...) {
     va_end(arglist);
 }
 
+static void connection_status_notice(void *data) {
+    int status = (int) (intptr_t) data;
+    streaming_notice_show(status == CONN_STATUS_POOR ? locstr("Unstable connection.") : NULL);
+}
+
 static void connection_status_update(int status) {
     switch (status) {
         case CONN_STATUS_OKAY:
             commons_log_info("Session", "Connection is okay");
-            streaming_notice_show(NULL);
             break;
         case CONN_STATUS_POOR:
             commons_log_warn("Session", "Connection is poor");
-            streaming_notice_show(locstr("Unstable connection."));
             break;
         default:
-            break;
+            return;
+    }
+    if (current_session) {
+        /* Called on the receive thread; LVGL may only be touched from the main thread. */
+        app_bus_post(current_session->app, connection_status_notice, (void *) (intptr_t) status);
     }
 }
 
@@ -51,7 +59,8 @@ static void connection_stage_failed(int stage, int errorCode) {
     const char *stageName = LiGetStageName(stage);
     commons_log_error("Session", "Connection failed at stage %d (%s), errorCode = %d (%s)", stage, stageName, errorCode,
                       strerror(errorCode));
-    streaming_error(current_session, errorCode, "Connection failed at stage %d (%s), errorCode = %d (%s)", stage,
+    streaming_error(current_session, errorCode,
+                    translatable("Connection failed at stage %d (%s), errorCode = %d (%s)"), stage,
                     stageName, errorCode, strerror(errorCode));
 }
 

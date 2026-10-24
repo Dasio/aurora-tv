@@ -1,0 +1,10 @@
+#!/bin/sh
+# Root helper for the Ultimate 2C dongle. Aurora cannot claim USB itself.
+for cmd in /proc/[0-9]*/cmdline; do
+    if tr '\0' ' ' < "$cmd" 2>/dev/null | grep -q bitdo_2c_bridge.py; then
+        exit 0
+    fi
+done
+PY=/usr/bin/python3
+[ -x "$PY" ] || PY=python3
+setsid "$PY" /var/lib/webosbrew/bitdo_2c_bridge.py >>/tmp/bitdo-2c.log 2>&1 </dev/null &

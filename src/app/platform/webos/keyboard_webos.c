@@ -27,8 +27,10 @@ bool stream_input_webos_intercept_remote_keys(stream_input_t *input, const SDL_K
             return true;
         }
         case SDL_SCANCODE_WEBOS_HOME: {
-            /* During streaming, forward Home to the host (e.g. Reshade); ribbon when idle/view-only. */
-            if (session != NULL && !input->view_only) {
+            /* KEYS_HOME is always captured, so the TV never acts on Home by itself. During a
+             * stream it goes to the host as Windows Home only when the user chose that;
+             * otherwise (and when idle/view-only) open the TV home screen like other apps. */
+            if (session != NULL && !input->view_only && app_configuration->home_key_to_host) {
                 *keyCode = VK_HOME;
                 return false;
             }

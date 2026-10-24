@@ -126,7 +126,19 @@ lv_obj_t *launcher_win_create(lv_fragment_t *self, lv_obj_t *parent) {
     lv_label_set_text_static(title_label, "AURORA");
 
     controller->profile_dropdown = lv_dropdown_create(topbar);
-    lv_obj_set_style_max_width(controller->profile_dropdown, LV_DPX(160), 0);
+    /* Same footprint as the server selector: theme default dropdowns are much taller. */
+    lv_obj_t *profile_dd = controller->profile_dropdown;
+    const lv_font_t *profile_font = lv_theme_get_font_small(topbar);
+    lv_obj_set_size(profile_dd, LV_DPX(140), LV_DPX(TOPBAR_BTN_SIZE));
+    lv_obj_set_style_pad_hor(profile_dd, LV_DPX(14), 0);
+    lv_obj_set_style_pad_ver(profile_dd,
+                             LV_MAX(0, (LV_DPX(TOPBAR_BTN_SIZE) - lv_font_get_line_height(profile_font)) / 2), 0);
+    lv_obj_set_style_radius(profile_dd, LV_DPX(12), 0);
+    lv_obj_set_style_border_width(profile_dd, 0, 0);
+    lv_obj_set_style_bg_color(profile_dd, ml_color_hex(ML_COLOR_SURFACE_ALT), 0);
+    lv_obj_set_style_bg_opa(profile_dd, LV_OPA_70, 0);
+    lv_obj_set_style_text_color(profile_dd, ml_color_hex(ML_COLOR_TEXT), 0);
+    lv_obj_set_style_text_font(profile_dd, profile_font, 0);
     lv_obj_add_event_cb(controller->profile_dropdown, launcher_profile_changed, LV_EVENT_VALUE_CHANGED, controller);
     launcher_refresh_profile_dropdown(controller);
     launcher_attach_profile_dropdown_nav(controller);
@@ -261,12 +273,13 @@ static void launcher_refresh_profile_dropdown(launcher_fragment_t *controller) {
         if (i > 0) {
             strcat(options, "\n");
         }
-        strcat(options, profile->name);
+        // profile_manager stores the built-in profile as "Default"; translate it only while it keeps that name.
+        strcat(options, strcmp(profile->name, "Default") == 0 ? locstr("Default") : profile->name);
         if (active_id && strcmp(profile->id, active_id) == 0) {
             active_index = i;
         }
     }
-    lv_dropdown_set_options(controller->profile_dropdown, options[0] ? options : "Default");
+    lv_dropdown_set_options(controller->profile_dropdown, options[0] ? options : locstr("Default"));
     lv_dropdown_set_selected(controller->profile_dropdown, active_index);
 }
 

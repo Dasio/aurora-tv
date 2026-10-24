@@ -394,8 +394,8 @@ void app_set_fullscreen(app_t *app, bool fullscreen) {
 
 static SDL_AssertState app_assertion_handler_ui(const SDL_AssertData *data, void *userdata) {
     (void) userdata;
-    app_fatal_error("Assertion failure", "at %s\n(%s:%d): '%s'", data->function, data->filename, data->linenum,
-                    data->condition);
+    app_fatal_error(translatable("Assertion failure"), "at %s\n(%s:%d): '%s'", data->function, data->filename,
+                    data->linenum, data->condition);
     return SDL_ASSERTION_ALWAYS_IGNORE;
 }
 
