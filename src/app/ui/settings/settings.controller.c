@@ -1730,7 +1730,8 @@ static lv_obj_t *embed_add_submenu_row(lv_obj_t *parent, settings_controller_t *
     lv_obj_align(lab, LV_ALIGN_LEFT_MID, text_x, 0);
 
     lv_obj_t *chev = lv_label_create(btn);
-    lv_label_set_text_static(chev, LV_SYMBOL_RIGHT);
+    lv_label_set_text_static(chev, MAT_SYMBOL_CHEVRON_RIGHT);
+    lv_obj_set_style_text_font(chev, lv_theme_moonlight_get_iconfont_normal(btn), 0);
     lv_obj_set_style_text_color(chev, ml_color_hex(ML_COLOR_TEXT_MUTED), 0);
     lv_obj_align(chev, LV_ALIGN_RIGHT_MID, 0, 0);
     return btn;
