@@ -189,6 +189,8 @@ export WEBOS_SDK_DIR=/path/to/arm-webos-linux-gnueabi_sdk-buildroot
 
 ```bash
 sudo mv /tmp/arm-webos-linux-gnueabi_sdk-buildroot /opt/
+# A moved SDK keeps its old absolute paths until it is relocated again.
+sudo /opt/arm-webos-linux-gnueabi_sdk-buildroot/relocate-sdk.sh
 export TOOLCHAIN_FILE=/opt/arm-webos-linux-gnueabi_sdk-buildroot/share/buildroot/toolchainfile.cmake
 ./scripts/webos/easy_build.sh -DCMAKE_BUILD_TYPE=Release
 ```

@@ -44,7 +44,7 @@ if [ ! -d arm-webos-linux-gnueabi_sdk-buildroot ] || \
     SDK_ARCHIVE=arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz
     if [ ! -f "${SDK_ARCHIVE}" ]; then
         echo "Downloading webOS SDK (${SDK_VERSION})..."
-        curl -sL -O "https://github.com/openlgtv/buildroot-nc4/releases/download/${SDK_VERSION}/${SDK_ARCHIVE}"
+        curl -sSL --fail -O "https://github.com/openlgtv/buildroot-nc4/releases/download/${SDK_VERSION}/${SDK_ARCHIVE}"
     fi
     echo "Extracting SDK..."
     tar -xzf "${SDK_ARCHIVE}"

@@ -28,7 +28,8 @@ cmake --build build
 ```
 
 webOS, from Windows via WSL (this is the path that is actually used here — it downloads
-and caches the buildroot NDK on first run):
+and caches the buildroot NDK on first run). The distro must be Ubuntu 24.04+; use
+`-d Ubuntu-24.04` if your `Ubuntu` distro is older:
 
 ```bash
 wsl -d Ubuntu -- python3 /mnt/c/.../scripts/webos/run_wsl_build.py RelWithDebInfo

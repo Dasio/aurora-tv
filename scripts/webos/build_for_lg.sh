@@ -54,14 +54,17 @@ if [ ! -f "${SDK_DIR}/share/buildroot/toolchainfile.cmake" ]; then
     cd "${SDK_CACHE}"
 
     if [ ! -f "${SDK_ARCHIVE}" ]; then
+        # Download to .part so an interrupted or failed fetch is never reused as the archive.
+        rm -f "${SDK_ARCHIVE}.part"
         if command -v curl &>/dev/null; then
-            curl -L -O "${SDK_URL}"
+            curl -L --fail -o "${SDK_ARCHIVE}.part" "${SDK_URL}"
         elif command -v wget &>/dev/null; then
-            wget "${SDK_URL}"
+            wget -O "${SDK_ARCHIVE}.part" "${SDK_URL}"
         else
             echo "Error: curl or wget required to download the SDK"
             exit 1
         fi
+        mv "${SDK_ARCHIVE}.part" "${SDK_ARCHIVE}"
     fi
     
     echo "Extracting SDK..."
@@ -91,6 +94,9 @@ fi
 echo ""
 echo "Running build..."
 export TOOLCHAIN_FILE
+# Keyed by SDK version too: a build dir from the previous SDK keeps its ExternalProject
+# stamps, so mbedtls/opus/sdl2-compat would not be rebuilt with the new compiler.
+export CMAKE_BINARY_DIR="${CMAKE_BINARY_DIR:-build/webos-${SDK_VERSION}}"
 ./scripts/webos/easy_build.sh -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
 
 echo ""

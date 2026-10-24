@@ -45,6 +45,13 @@ _sdk_root="$(dirname "$(dirname "$(dirname "${TOOLCHAIN_FILE}")")")"
 _webos_gcc="${_sdk_root}/bin/arm-webos-linux-gnueabi-gcc"
 _webos_gxx="${_sdk_root}/bin/arm-webos-linux-gnueabi-g++"
 if [ -x "${_webos_gcc}" ]; then
+  # Fail here rather than in CMake's compiler check: the SDK host tools need glibc >= 2.36.
+  if ! _gcc_err="$("${_webos_gcc}" --version 2>&1 >/dev/null)"; then
+    echo "webOS compiler does not run on this host: ${_webos_gcc}"
+    echo "${_gcc_err}"
+    echo "The SDK needs glibc >= 2.36 on the build host (Ubuntu 24.04+ / Debian 12+)."
+    exit 1
+  fi
   BUILD_OPTIONS="${BUILD_OPTIONS} -DCMAKE_C_COMPILER=${_webos_gcc}"
 fi
 if [ -x "${_webos_gxx}" ]; then
