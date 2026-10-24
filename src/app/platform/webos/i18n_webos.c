@@ -2,14 +2,15 @@
 #include "util/path.h"
 
 #include <SDL.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <webosi18n_C.h>
 
 #include "logging.h"
 
-#define LOCSTR_BUCKETS 256
+static ResBundleC *bundle = NULL;
+static char locale_[16] = "\0";
+static char language[4] = "\0";
 
 /* resBundle_getLocString() returns a fresh strdup on every call, so locstr() hands out a cached
  * copy instead, one table per locale. Tables are never freed: the UI keeps these pointers
@@ -23,35 +24,27 @@ typedef struct locstr_entry_t {
 
 typedef struct locstr_table_t {
     struct locstr_table_t *next;
-    char locale[16];
-    locstr_entry_t *buckets[LOCSTR_BUCKETS];
+    char locale[sizeof(locale_)];
+    locstr_entry_t *entries;
 } locstr_table_t;
-
-static ResBundleC *bundle = NULL;
-static char locale_[16] = "\0";
-static char language[4] = "\0";
 
 /* Guards bundle and the locstr tables. locstr() is also called from worker threads. */
 static SDL_mutex *lock = NULL;
 static locstr_table_t *tables = NULL;
 static locstr_table_t *table = NULL;
 
-static SDL_mutex *i18n_lock(void) {
+static void i18n_lock(void) {
     static SDL_SpinLock init_lock = 0;
     SDL_AtomicLock(&init_lock);
     if (!lock) {
         lock = SDL_CreateMutex();
     }
     SDL_AtomicUnlock(&init_lock);
-    return lock;
+    SDL_LockMutex(lock);
 }
 
-static uint32_t locstr_hash(const char *s) {
-    uint32_t h = 2166136261u;
-    for (; *s; s++) {
-        h = (h ^ (unsigned char) *s) * 16777619u;
-    }
-    return h;
+static void i18n_unlock(void) {
+    SDL_UnlockMutex(lock);
 }
 
 static locstr_table_t *locstr_table_for(const char *locale) {
@@ -72,8 +65,7 @@ static locstr_table_t *locstr_table_for(const char *locale) {
 
 /* Caller holds lock, and table is set. */
 static const char *locstr_lookup(const char *msgid) {
-    locstr_entry_t **bucket = &table->buckets[locstr_hash(msgid) % LOCSTR_BUCKETS];
-    for (locstr_entry_t *e = *bucket; e; e = e->next) {
+    for (locstr_entry_t *e = table->entries; e; e = e->next) {
         if (strcmp(e->msgid, msgid) == 0) {
             return e->text;
         }
@@ -90,8 +82,8 @@ static const char *locstr_lookup(const char *msgid) {
     }
     memcpy(e->msgid, msgid, msgid_size);
     e->text = translated;
-    e->next = *bucket;
-    *bucket = e;
+    e->next = table->entries;
+    table->entries = e;
     return translated;
 }
 
@@ -119,20 +111,18 @@ static char *strip_trailing_slash(char *path) {
     return path;
 }
 
+static bool probe_translated(ResBundleC *b, const char *msgid) {
+    char *probe = (char *) resBundle_getLocString(b, msgid);
+    bool translated = probe != NULL && probe[0] && strcmp(probe, msgid) != 0;
+    free(probe);
+    return translated;
+}
+
 static bool bundle_is_translated(ResBundleC *b) {
     if (!b) {
         return false;
     }
-    char *probe = (char *) resBundle_getLocString(b, "[Localized Language]");
-    bool translated = probe != NULL && probe[0] && strcmp(probe, "[Localized Language]") != 0;
-    free(probe);
-    if (translated) {
-        return true;
-    }
-    probe = (char *) resBundle_getLocString(b, "Cancel");
-    translated = probe != NULL && strcmp(probe, "Cancel") != 0;
-    free(probe);
-    return translated;
+    return probe_translated(b, "[Localized Language]") || probe_translated(b, "Cancel");
 }
 
 static bool try_load_bundle(const char *locale_tag, const char *root) {
@@ -157,10 +147,9 @@ static bool try_load_bundle(const char *locale_tag, const char *root) {
 }
 
 const char *locstr(const char *msgid) {
-    SDL_mutex *m = i18n_lock();
-    SDL_LockMutex(m);
+    i18n_lock();
     const char *text = table ? locstr_lookup(msgid) : msgid;
-    SDL_UnlockMutex(m);
+    i18n_unlock();
     return text;
 }
 
@@ -256,10 +245,9 @@ static void load_locale(const char *locale) {
 }
 
 void i18n_setlocale(const char *locale) {
-    SDL_mutex *m = i18n_lock();
-    SDL_LockMutex(m);
+    i18n_lock();
     load_locale(locale);
-    SDL_UnlockMutex(m);
+    i18n_unlock();
 }
 
 const char *app_get_locale_lang() {
