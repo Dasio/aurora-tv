@@ -16,8 +16,8 @@
 #include <string.h>
 
 /**
- * Compact stream settings (punktfunk FocusRow style): one labelled control per row.
- * Advanced host/input/experimental stay in their panes.
+ * Compact stream settings (punktfunk FocusRow style): one labelled control per row,
+ * plus the home screen grid layout. Advanced host/input/experimental stay in their panes.
  */
 typedef struct {
     lv_fragment_t base;
@@ -66,6 +66,14 @@ const lv_fragment_class_t settings_pane_basic_cls = {
     .destructor_cb = pane_dtor,
     .create_obj_cb = create_obj,
     .instance_size = sizeof(basic_pane_t),
+};
+
+/* Home screen layout as columns × rows (columns come from apps_grid_columns()); the
+ * label needs no translation. The grid is rebuilt when Settings closes. */
+static const pref_dropdown_int_entry_t launcher_grid_entries[] = {
+    {"8 × 3", 3, true},
+    {"5 × 2", 2, false},
+    {"3 × 1", 1, false},
 };
 
 #define BITRATE_STEP 1000
@@ -215,6 +223,12 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     pref_style_inline_control(adec_dropdown);
     pref_row_bind_control(adec_row, adec_dropdown);
     lv_obj_add_event_cb(adec_dropdown, backend_changed_cb, LV_EVENT_VALUE_CHANGED, pane);
+    lv_obj_t *grid_row = pref_focus_row(view, locstr("Game grid"));
+    lv_obj_t *grid_dropdown = pref_dropdown_int(grid_row, launcher_grid_entries,
+                                                sizeof(launcher_grid_entries) / sizeof(launcher_grid_entries[0]),
+                                                &app_configuration->launcher_grid_rows, NULL);
+    pref_style_inline_control(grid_dropdown);
+    pref_row_bind_control(grid_row, grid_dropdown);
 
     return view;
 }

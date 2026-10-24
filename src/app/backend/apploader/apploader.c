@@ -93,6 +93,13 @@ void apploader_cancel(apploader_t *loader) {
     commons_log_debug("AppLoader", "[loader %p] task cancel, task=%p", loader, loader->task);
     executor_cancel(loader->executor, loader->task);
     loader->task = NULL;
+    /* A task cancelled before it started finalizes with ECANCELED and never posts
+     * task_callback(), so nothing would leave LOADING and every later apploader_load()
+     * would bail out as "already loading". A task that was already running still
+     * reports back and sets the state itself. */
+    if (loader->state == APPLOADER_STATE_LOADING) {
+        loader->state = APPLOADER_STATE_IDLE;
+    }
 }
 
 void apploader_destroy(apploader_t *loader) {
