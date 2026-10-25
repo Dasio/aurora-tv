@@ -119,7 +119,9 @@ void fakeKeyPress(SDL_Keycode key) {
 
     event.key.type = SDL_KEYUP;
     SDL_PushEvent(&event);
-    waitFor(20);
+    // lv_drv_sdl_key.c drops a second press of the same key within NAV_DUP_MS (50 ms) as a
+    // Magic Remote duplicate, so space presses out like a person would.
+    waitFor(40);
 }
 
 void fakeInput(const char *text) {
