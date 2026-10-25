@@ -2,10 +2,13 @@
 #include "res.h"
 
 #include "draw/sdl/lv_draw_sdl_utils.h"
+#include "draw/sdl/lv_draw_sdl_rect.h"
 #include "lvgl/theme/lv_theme_moonlight.h"
 #include "lvgl/theme/lv_theme_moonlight_colors.h"
 
 static void appitem_holder_free_cb(lv_event_t *event);
+
+static void appitem_reset_corner_mask(lv_event_t *e);
 
 static void appitem_draw_decor(lv_event_t *e);
 
@@ -31,6 +34,7 @@ lv_obj_t *appitem_view(apps_fragment_t *controller, lv_obj_t *parent) {
     lv_obj_set_style_outline_opa(item, LV_OPA_COVER, LV_STATE_FOCUS_KEY);
     lv_obj_set_style_transition(item, &styles->tr_pressed, LV_STATE_PRESSED | LV_STATE_FOCUS_KEY);
     lv_obj_set_style_transition(item, &styles->tr_released, LV_STATE_DEFAULT);
+    lv_obj_add_event_cb(item, appitem_reset_corner_mask, LV_EVENT_DRAW_MAIN_BEGIN, NULL);
     lv_obj_add_event_cb(item, appitem_draw_decor, LV_EVENT_DRAW_MAIN, styles);
     lv_obj_add_event_cb(item, appitem_deselected, LV_EVENT_DEFOCUSED, NULL);
 
@@ -126,6 +130,32 @@ void appitem_style_deinit(appitem_styles_t *style) {
 static void appitem_holder_free_cb(lv_event_t *event) {
     appitem_viewholder_t *holder = event->user_data;
     free(holder);
+}
+
+/* The SDL renderer bakes each cover's rounded corners once and caches them per texture,
+ * size and radius (img_rounded_frag_obtain). It builds them from the corner mask that
+ * rounded rects of the same radius share, without resetting the color/alpha mod the last
+ * such rect left on it, and with LV_GPU_SDL_CUSTOM_BLEND_MODE off the cover is multiplied
+ * into that mask. Corners baked right after Settings (the Game grid rebuild loads every
+ * cover again) came out as small blue squares until restart. Reset the mask first. */
+static void appitem_reset_corner_mask(lv_event_t *e) {
+    lv_obj_t *target = lv_event_get_target(e);
+    /* The radius the clip_corner mask, and so draw_img_rounded(), ends up with. */
+    lv_coord_t radius = LV_MIN(lv_obj_get_style_radius(target, 0),
+                               LV_MIN(lv_obj_get_width(target), lv_obj_get_height(target)) / 2);
+    if (radius <= 0 || !lv_obj_get_style_clip_corner(target, 0)) {
+        return;
+    }
+    lv_draw_sdl_ctx_t *ctx = (lv_draw_sdl_ctx_t *) lv_event_get_draw_ctx(e);
+    bool in_cache = false;
+    SDL_Texture *mask = lv_draw_sdl_rect_bg_frag_obtain(ctx, radius, &in_cache);
+    if (!in_cache) {
+        /* Not kept: the renderer creates a fresh, untinted one when the cover draws. */
+        SDL_DestroyTexture(mask);
+        return;
+    }
+    SDL_SetTextureColorMod(mask, 0xFF, 0xFF, 0xFF);
+    SDL_SetTextureAlphaMod(mask, LV_OPA_COVER);
 }
 
 static void appitem_draw_decor(lv_event_t *e) {
