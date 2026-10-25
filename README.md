@@ -1,6 +1,6 @@
 # Aurora
 
-Unofficial fork of [Moonlight TV](https://github.com/mariotaku/moonlight-tv) for **LG webOS** (C1–C5 and compatible sets), focused on high-quality streaming on OLED TVs with a remote- and gamepad-friendly UI.
+Unofficial fork of [Moonlight TV](https://github.com/mariotaku/moonlight-tv) for **LG webOS 5 and newer** (2020 sets onward, C1–C5 included), focused on high-quality streaming on OLED TVs with a remote- and gamepad-friendly UI.
 
 > Rights to the original project belong to [mariotaku/moonlight-tv](https://github.com/mariotaku/moonlight-tv) and the Moonlight community. Provided without warranty.
 

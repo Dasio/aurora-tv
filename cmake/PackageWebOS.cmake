@@ -28,6 +28,8 @@ install(CODE "file(MAKE_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}/assets\")"
 # Installing the shim in the app lib dir overrides the system library and
 # the C5 then fails to start. Both of these TVs have libcurl.so.4, which is
 # the soname Aurora is linked against, so the system library is the one to use.
+# webOS 4 and older ship only libcurl.so.5, so Aurora needs webOS 5 or newer,
+# and the package is verified against those firmwares only (-r ">=5").
 
 set(CPACK_PACKAGE_NAME "${WEBOS_APPINFO_ID}")
 set(CPACK_GENERATOR "External")
@@ -53,9 +55,10 @@ set(CPACK_STRIP_FILES FALSE)
 add_custom_target(webos-package-aurora COMMAND cpack DEPENDS moonlight)
 
 if (NOT ENV{CI})
-    add_custom_target(webos-verify-aurora COMMAND webosbrew-ipk-verify -S -d "${CPACK_PACKAGE_FILE_NAME}.ipk"
+    add_custom_target(webos-verify-aurora COMMAND webosbrew-ipk-verify -S -d -r ">=5" "${CPACK_PACKAGE_FILE_NAME}.ipk"
             WORKING_DIRECTORY ${CPACK_PACKAGE_DIRECTORY}
-            DEPENDS webos-package-aurora)
+            DEPENDS webos-package-aurora
+            VERBATIM)
     if (ENV{ARES_DEVICE})
         set(ares_arguments "-d" $ENV{ARES_DEVICE})
     endif ()
