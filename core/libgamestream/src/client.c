@@ -503,8 +503,19 @@ static void append_launch_mode_param(char *url, size_t url_len, int width, int h
     }
 }
 
+void gs_append_hdr_launch_params(char *url, size_t url_len, int supported_video_formats, bool hdr) {
+    if (!(supported_video_formats & VIDEO_FORMAT_MASK_10BIT)) {
+        return;
+    }
+    append_param(url, url_len, "hdrMode", "%d", hdr ? 1 : 0);
+    append_param(url, url_len, "clientHdrCapVersion", "0");
+    append_param(url, url_len, "clientHdrCapSupportedFlagsInUint32", "0");
+    append_param(url, url_len, "clientHdrCapMetaDataId", "NV_STATIC_METADATA_TYPE_1");
+    append_param(url, url_len, "clientHdrCapDisplayData", "0x0x0x0x0x0x0x0x0x0x0");
+}
+
 int gs_start_app(GS_CLIENT hnd, PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool is_gfe, bool sops,
-                 bool localaudio, int gamepad_mask, const char* surround_params) {
+                 bool localaudio, int gamepad_mask, const char* surround_params, bool hdr) {
     int ret = GS_OK;
     char *result = NULL;
     HTTP_DATA *data = NULL;
@@ -619,13 +630,7 @@ int gs_start_app(GS_CLIENT hnd, PSERVER_DATA server, STREAM_CONFIGURATION *confi
     }
     append_param(url, sizeof(url), "continuousAudio", "1");
     if (!reconnect_same_app || !is_gfe) {
-        if (config->supportedVideoFormats & VIDEO_FORMAT_MASK_10BIT) {
-            append_param(url, sizeof(url), "hdrMode", "1");
-            append_param(url, sizeof(url), "clientHdrCapVersion", "0");
-            append_param(url, sizeof(url), "clientHdrCapSupportedFlagsInUint32", "0");
-            append_param(url, sizeof(url), "clientHdrCapMetaDataId", "NV_STATIC_METADATA_TYPE_1");
-            append_param(url, sizeof(url), "clientHdrCapDisplayData", "0x0x0x0x0x0x0x0x0x0x0");
-        }
+        gs_append_hdr_launch_params(url, sizeof(url), config->supportedVideoFormats, hdr);
         append_param(url, sizeof(url), "localAudioPlayMode", "%d", localaudio);
         append_param(url, sizeof(url), "remoteControllersBitmap", "%d", gamepad_mask);
         append_param(url, sizeof(url), "gcmap", "%d", gamepad_mask);

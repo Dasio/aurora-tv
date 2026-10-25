@@ -24,6 +24,7 @@
 #include <Limelight.h>
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #define MIN_SUPPORTED_GFE_VERSION 3
 #define MAX_SUPPORTED_GFE_VERSION 7
@@ -70,8 +71,14 @@ void gs_set_total_timeout(GS_CLIENT hnd, int timeout_secs);
 
 int gs_get_status(GS_CLIENT hnd, PSERVER_DATA server, const char *address, uint16_t port, bool unsupported);
 
+/* hdr: the user asked for HDR. A 10-bit format offered without it is 10-bit SDR. */
 int gs_start_app(GS_CLIENT hnd, PSERVER_DATA server, PSTREAM_CONFIGURATION config, int appId, bool is_gfe, bool sops,
-                 bool localaudio, int gamepad_mask, const char *surround_params);
+                 bool localaudio, int gamepad_mask, const char *surround_params, bool hdr);
+
+/* Appends hdrMode and the client HDR capabilities to a launch/resume URL when a 10-bit format
+ * is offered. hdrMode=0 for 10-bit SDR: Sunshine-family hosts read hdrMode=1 as "switch the
+ * display to HDR", whatever the format. */
+void gs_append_hdr_launch_params(char *url, size_t url_len, int supported_video_formats, bool hdr);
 
 int gs_applist(GS_CLIENT hnd, const SERVER_DATA *server, PAPP_LIST *app_list);
 
