@@ -57,6 +57,18 @@ static void update_buttons_layout(streaming_controller_t *controller);
 
 static void pin_toggle(lv_event_t *e);
 
+static void pin_clicked(lv_event_t *e);
+
+static void compact_clicked(lv_event_t *e);
+
+static void stats_toggle_compact(void *userdata);
+
+static void stats_bind(streaming_controller_t *controller);
+
+static bool stats_btn_focused(streaming_controller_t *controller);
+
+static void overlay_place_video(streaming_controller_t *controller);
+
 static void streaming_set_stats_pinned(streaming_controller_t *controller, bool pinned);
 
 /** Pretty codec label for stats (matches session_video video_format_name strings). */
@@ -538,7 +550,7 @@ static void on_view_created(lv_fragment_t *self, lv_obj_t *view) {
     controller->notice = notice;
     controller->notice_label = notice_label;
 
-    lv_obj_add_event_cb(controller->stats_pin, pin_toggle, LV_EVENT_VALUE_CHANGED, controller->stats);
+    stats_bind(controller);
 
     /* Grab keyboard for the stream so USB F-keys / Home / Insert are not eaten by the
      * compositor (webOS) or the desktop WM. On desktop, honor syskey_capture; on webOS
@@ -591,6 +603,7 @@ static void on_view_created(lv_fragment_t *self, lv_obj_t *view) {
 static void on_delete_obj(lv_fragment_t *self, lv_obj_t *view) {
     LV_UNUSED(view);
     streaming_controller_t *controller = (streaming_controller_t *) self;
+    lv_async_call_cancel(stats_toggle_compact, controller);
     if (controller->notice) {
         lv_obj_del(controller->notice);
     }
@@ -677,9 +690,7 @@ bool show_overlay(streaming_controller_t *controller) {
     overlay_showing = true;
     lv_obj_clear_flag(controller->base.obj, LV_OBJ_FLAG_HIDDEN);
 
-    lv_area_t coords = controller->video->coords;
-    streaming_enter_overlay(controller->global->session, coords.x1, coords.y1, lv_area_get_width(&coords),
-                            lv_area_get_height(&coords));
+    overlay_place_video(controller);
     streaming_refresh_stats();
 
     app_stop_text_input(&controller->global->ui.input);
@@ -687,6 +698,13 @@ bool show_overlay(streaming_controller_t *controller) {
     update_buttons_layout(controller);
 
     return true;
+}
+
+static void overlay_place_video(streaming_controller_t *controller) {
+    lv_obj_update_layout(controller->video);
+    lv_area_t coords = controller->video->coords;
+    streaming_enter_overlay(controller->global->session, coords.x1, coords.y1, lv_area_get_width(&coords),
+                            lv_area_get_height(&coords));
 }
 
 /* B/Back: close keyboard if shown, else hide overlay */
@@ -702,6 +720,10 @@ static void on_cancel_key(lv_event_t *event) {
 static void hide_overlay_impl(streaming_controller_t *controller) {
     app_input_set_button_points(&controller->global->ui.input, NULL);
     lv_obj_add_flag(controller->base.obj, LV_OBJ_FLAG_HIDDEN);
+    /* A pinned panel stays up while playing; don't leave the focus outline on it. */
+    if (stats_btn_focused(controller)) {
+        lv_group_focus_obj(controller->quit_btn);
+    }
     if (!overlay_showing) {
         return;
     }
@@ -717,6 +739,7 @@ static void hide_overlay(lv_event_t *event) {
 static void overlay_key_cb(lv_event_t *e) {
     streaming_controller_t *controller = lv_event_get_user_data(e);
     lv_group_t *group = controller->group;
+    bool on_stats = stats_btn_focused(controller);
     switch (lv_event_get_key(e)) {
         case LV_KEY_LEFT:
             lv_group_focus_prev(group);
@@ -724,9 +747,24 @@ static void overlay_key_cb(lv_event_t *e) {
         case LV_KEY_RIGHT:
             lv_group_focus_next(group);
             break;
+        case LV_KEY_UP:
+            if (!on_stats) {
+                lv_group_focus_obj(controller->stats_pin);
+            }
+            break;
+        case LV_KEY_DOWN:
+            if (on_stats) {
+                lv_group_focus_obj(controller->quit_btn);
+            }
+            break;
         default:
             break;
     }
+}
+
+static bool stats_btn_focused(streaming_controller_t *controller) {
+    lv_obj_t *focused = lv_group_get_focused(controller->group);
+    return focused != NULL && (focused == controller->stats_pin || focused == controller->stats_compact_btn);
 }
 
 static void update_buttons_layout(streaming_controller_t *controller) {
@@ -781,4 +819,64 @@ static void pin_toggle(lv_event_t *e) {
     lv_fragment_t *fragment = lv_obj_get_user_data(toggle_view);
     bool checked = lv_obj_has_state(lv_event_get_current_target(e), LV_STATE_CHECKED);
     streaming_set_stats_pinned((streaming_controller_t *) fragment, checked);
+}
+
+// Not LV_OBJ_FLAG_CHECKABLE: that also flips it on the arrow keys used to move focus away.
+static void pin_clicked(lv_event_t *e) {
+    lv_obj_t *pin = lv_event_get_current_target(e);
+    if (lv_obj_has_state(pin, LV_STATE_CHECKED)) {
+        lv_obj_clear_state(pin, LV_STATE_CHECKED);
+    } else {
+        lv_obj_add_state(pin, LV_STATE_CHECKED);
+    }
+    lv_event_send(pin, LV_EVENT_VALUE_CHANGED, NULL);
+}
+
+static void compact_clicked(lv_event_t *e) {
+    // Rebuilding the panel deletes this button, so wait until its event is done
+    lv_async_call(stats_toggle_compact, lv_event_get_user_data(e));
+}
+
+static void stats_toggle_compact(void *userdata) {
+    streaming_controller_t *controller = userdata;
+    lv_obj_t *old_stats = controller->stats;
+    lv_obj_t *parent = lv_obj_get_parent(old_stats);
+    bool hidden = lv_obj_has_flag(old_stats, LV_OBJ_FLAG_HIDDEN);
+    bool key_focus = lv_obj_has_state(controller->stats_compact_btn, LV_STATE_FOCUS_KEY);
+
+    // Saved on exit with the other settings, same as the "Compact stats" checkbox
+    app_configuration->show_stats_compact = !app_configuration->show_stats_compact;
+    lv_obj_del(old_stats);
+    streaming_stats_create(controller, parent);
+    stats_bind(controller);
+    if (hidden) {
+        lv_obj_add_flag(controller->stats, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (overlay_pinned) {
+        lv_obj_add_state(controller->stats, LV_STATE_USER_1);
+        lv_obj_add_state(controller->stats_pin, LV_STATE_CHECKED);
+    }
+
+    lv_group_focus_obj(controller->stats_compact_btn);
+    if (key_focus) {
+        // Focus set outside input handling doesn't get the keypad outline by itself
+        lv_obj_add_state(controller->stats_compact_btn, LV_STATE_FOCUS_KEY);
+    }
+    if (overlay_showing) {
+        overlay_place_video(controller);
+    }
+    streaming_refresh_stats();
+}
+
+/* Runs again after every rebuild of the stats panel. */
+static void stats_bind(streaming_controller_t *controller) {
+    lv_obj_add_event_cb(controller->stats_pin, pin_toggle, LV_EVENT_VALUE_CHANGED, controller->stats);
+    lv_obj_add_event_cb(controller->stats_pin, pin_clicked, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(controller->stats_compact_btn, compact_clicked, LV_EVENT_CLICKED, controller);
+    // Keys don't bubble from the panel to the overlay (and it moves to the top layer when pinned)
+    lv_obj_t *buttons[] = {controller->stats_compact_btn, controller->stats_pin};
+    for (size_t i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
+        lv_obj_add_event_cb(buttons[i], overlay_key_cb, LV_EVENT_KEY, controller);
+        lv_obj_add_event_cb(buttons[i], on_cancel_key, LV_EVENT_CANCEL, controller);
+    }
 }
