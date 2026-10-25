@@ -26,6 +26,7 @@ typedef struct experimental_pane_t {
     pref_dropdown_int_entry_t abr_entries[3];
     pref_dropdown_int_entry_t audio_lead_entries[7];
     pref_dropdown_int_entry_t surround_51_entries[2];
+    pref_dropdown_int_entry_t frame_drop_entries[4];
 #if FEATURE_I18N_LANGUAGE_SETTINGS
     pref_dropdown_string_entry_t lang_entries[16];
     int lang_entries_len;
@@ -86,6 +87,10 @@ static void pane_ctor(lv_fragment_t *self, void *args) {
                                                                  SURROUND_51_PASSTHROUGH, true};
     pane->surround_51_entries[1] = (pref_dropdown_int_entry_t) {locstr("PCM (other soundbars)"),
                                                                 SURROUND_51_PCM, false};
+    pane->frame_drop_entries[0] = (pref_dropdown_int_entry_t) {locstr("Auto (4K)"), FRAME_DROP_THRESHOLD_AUTO, true};
+    pane->frame_drop_entries[1] = (pref_dropdown_int_entry_t) {locstr("Off"), FRAME_DROP_THRESHOLD_OFF, false};
+    pane->frame_drop_entries[2] = (pref_dropdown_int_entry_t) {locstr("2 frames"), 2, false};
+    pane->frame_drop_entries[3] = (pref_dropdown_int_entry_t) {locstr("3 frames"), 3, false};
 #if FEATURE_I18N_LANGUAGE_SETTINGS
     pane->lang_entries_len = 0;
     for (int i = 0; i18n_entry_at(i)->locale && pane->lang_entries_len < 16; i++) {
@@ -165,6 +170,16 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
     idr_refresh_state_update(pane);
 
 #if TARGET_WEBOS
+    lv_obj_t *drop_row = pref_focus_row(view, locstr("Frame drop threshold"));
+    lv_obj_t *drop_dd = pref_dropdown_int(drop_row, pane->frame_drop_entries,
+                                          sizeof(pane->frame_drop_entries) / sizeof(pane->frame_drop_entries[0]),
+                                          &app_configuration->frame_drop_threshold, NULL);
+    pref_style_inline_control(drop_dd);
+    pref_row_bind_control(drop_row, drop_dd);
+    lv_obj_add_event_cb(drop_dd, reconnect_cb, LV_EVENT_VALUE_CHANGED, pane);
+    pref_desc_label(view, locstr("Drops late frames once the TV queues this many, so delay cannot build up. "
+                                 "Auto: 2 at 4K. Never used with AV1."), false);
+
     pref_header(view, locstr("Audio"));
     lv_obj_t *lead_row = pref_focus_row(view, locstr("Audio buffer (5.1 passthrough)"));
     lv_obj_t *lead_dd = pref_dropdown_int(lead_row, pane->audio_lead_entries,

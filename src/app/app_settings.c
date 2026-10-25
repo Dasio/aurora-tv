@@ -186,6 +186,7 @@ void settings_initialize(app_settings_t *config, char *conf_dir) {
     config->hevc_sliced_frames = false;
     config->idr_refresh_interval_ms = 0;
     config->render_queue_frames = 0;
+    config->frame_drop_threshold = FRAME_DROP_THRESHOLD_AUTO;
     config->audio_lead_ms = 20;
     config->show_stats_on_start = false;
     config->show_stats_compact = false;
@@ -293,6 +294,7 @@ bool settings_save(app_settings_t *config) {
     ini_write_bool(fp, "hevc_sliced_frames", config->hevc_sliced_frames);
     ini_write_int(fp, "idr_refresh_interval_ms", config->idr_refresh_interval_ms);
     ini_write_int(fp, "render_queue_frames", config->render_queue_frames);
+    ini_write_int(fp, "frame_drop_threshold", config->frame_drop_threshold);
     ini_write_bool(fp, "show_stats_on_start", config->show_stats_on_start);
     ini_write_bool(fp, "show_stats_compact", config->show_stats_compact);
     ini_write_bool(fp, "show_logs", config->show_logs);
@@ -492,6 +494,13 @@ static int settings_parse(app_settings_t *config, const char *section, const cha
     } else if (INI_FULL_MATCH("video", "render_queue_frames")) {
         /* Retired V-Sync queue: keep 0 so old ini files cannot re-enable it. */
         config->render_queue_frames = 0;
+    } else if (INI_FULL_MATCH("video", "frame_drop_threshold")) {
+        set_int(&config->frame_drop_threshold, value);
+        if (config->frame_drop_threshold != FRAME_DROP_THRESHOLD_OFF &&
+            (config->frame_drop_threshold < FRAME_DROP_THRESHOLD_MIN ||
+             config->frame_drop_threshold > FRAME_DROP_THRESHOLD_MAX)) {
+            config->frame_drop_threshold = FRAME_DROP_THRESHOLD_AUTO;
+        }
     } else if (INI_FULL_MATCH("audio", "surround_pcm")) {
         /* Legacy bool (default true in v1.2.x, wrong speakers): ignored; see surround_51_mode. */
     } else if (INI_FULL_MATCH("audio", "audio_sequential_pts")) {
