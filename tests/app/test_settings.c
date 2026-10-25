@@ -108,10 +108,19 @@ void testSyncRefreshRate() {
     TEST_ASSERT_EQUAL_INT(60, settings.stream.fps);
     TEST_ASSERT_EQUAL_INT(5994, settings.client_refresh_rate_x100);
 #else
-    settings.stream.fps = 119;
+    /* What the Custom FPS dialog stores for 119.88: rounded fps plus the exact rate. */
+    settings.stream.fps = 120;
     settings.client_refresh_rate_x100 = 11988;
     settings_sync_refresh_rate(&settings);
     TEST_ASSERT_EQUAL_INT(120, settings.stream.fps);
+    TEST_ASSERT_EQUAL_INT(11988, settings.client_refresh_rate_x100);
+    /* stream.fps wins, as in settings_reconcile_refresh_rate: a rate that rounds to
+     * another fps is dropped instead of moving fps. */
+    settings.stream.fps = 119;
+    settings.client_refresh_rate_x100 = 11988;
+    settings_sync_refresh_rate(&settings);
+    TEST_ASSERT_EQUAL_INT(119, settings.stream.fps);
+    TEST_ASSERT_EQUAL_INT(0, settings.client_refresh_rate_x100);
 #endif
 }
 
