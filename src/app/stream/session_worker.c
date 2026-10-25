@@ -11,6 +11,7 @@
 #include "stream/audio/session_audio.h"
 #include "stream/video/session_video.h"
 #include "stream/adaptive_bitrate.h"
+#include "stream/link_hint.h"
 #include "app_session.h"
 #include "backend/pcmanager/worker/worker.h"
 #include "app_settings.h"
@@ -136,6 +137,23 @@ int session_worker(session_t *session) {
     setenv("SS4S_NDL_AUDIO_LEAD_MS", audio_lead, 1);
     setenv("SS4S_NDL_AUDIO_SEQUENTIAL_PTS", app_configuration->audio_sequential_pts ? "1" : "0", 1);
 #endif
+
+    /* Rubylight paces video by its own route unless the client says it is on
+     * Wi-Fi or behind a slower port. Unknown sends nothing: the host's default. */
+    link_hint_t link;
+    if (link_hint_for_host(server->serverInfo.address, &link)) {
+        session->config.stream.clientWireless = link.wireless;
+        session->config.stream.clientLinkMbps = link.link_mbps;
+        if (link.wireless) {
+            commons_log_info("Session", "Link to host via %s: wireless", link.ifname);
+        } else if (link.link_mbps > 0) {
+            commons_log_info("Session", "Link to host via %s: wired, %d Mb/s", link.ifname, link.link_mbps);
+        } else {
+            commons_log_info("Session", "Link to host via %s: wired, speed unknown", link.ifname);
+        }
+    } else {
+        commons_log_info("Session", "Link to host: interface not found, no link hint");
+    }
 
     int startResult = LiStartConnection(&server->serverInfo, &session->config.stream,
                                         session_connection_callbacks_prepare(session),
