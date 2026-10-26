@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <assert.h>
 #include "lvgl/lv_sdl_drv_input.h"
+#include "lvgl/input/lv_drv_sdl_key.h"
 #include "lvgl/lv_disp_drv_app.h"
 #include "lvgl/util/lv_app_utils.h"
 
@@ -28,6 +29,10 @@
 #include "profile/profile_manager.h"
 #include "util/log_overlay.h"
 
+#if TARGET_WEBOS
+#include "platform/webos/steam_ble.h"
+#endif
+
 PCONFIGURATION app_configuration = NULL;
 
 static void quit_confirm_cb(lv_event_t *e);
@@ -35,6 +40,10 @@ static void quit_confirm_cb(lv_event_t *e);
 static void libs_init(app_t *app, int argc, char *argv[]);
 
 app_t *global = NULL;
+
+#if TARGET_WEBOS
+static webos_steam_ble_state_t *steam_ble = NULL;
+#endif
 
 
 int app_init(app_t *app, app_settings_loader *settings_loader, int argc, char *argv[]) {
@@ -107,6 +116,10 @@ int app_init(app_t *app, app_settings_loader *settings_loader, int argc, char *a
     commons_log_info("APP", "UI locale: %s (%s)", i18n_locale(), locstr("[Localized Language]"));
 
     app_input_init(&app->input, app);
+#if TARGET_WEBOS
+    /* BLE Steam Controllers send no input until someone exchanges the MTU (issue #81). */
+    steam_ble = webos_steam_ble_start();
+#endif
 
     app_ui_init(&app->ui, app);
     log_overlay_init();
@@ -126,6 +139,10 @@ void app_deinit(app_t *app) {
     app_ui_deinit(&app->ui);
     app_set_keep_awake(app, false);
     app_input_deinit(&app->input);
+#if TARGET_WEBOS
+    webos_steam_ble_stop(steam_ble);
+    steam_ble = NULL;
+#endif
 
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
@@ -251,6 +268,9 @@ static int app_event_filter(void *userdata, SDL_Event *event) {
                 session_handle_input_event(app->session, event);
             }
             app_input_handle_event(&app->input, event);
+            if (app->ui.input.key.indev != NULL) {
+                lv_sdl_key_input_release_gamepad(app->ui.input.key.indev);
+            }
             return 0;
         }
         case SDL_JOYDEVICEADDED:

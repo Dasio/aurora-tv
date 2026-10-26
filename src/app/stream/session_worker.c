@@ -27,7 +27,7 @@
 
 #if TARGET_WEBOS
 /* Installer greps this string out of the ELF. */
-static const char aurora_build_tag[] __attribute__((used)) = "aurora-v1.3.2";
+static const char aurora_build_tag[] __attribute__((used)) = "aurora-v1.3.3";
 #endif
 
 int session_worker(session_t *session) {
@@ -136,14 +136,6 @@ int session_worker(session_t *session) {
     snprintf(audio_lead, sizeof(audio_lead), "%d", app_configuration->audio_lead_ms);
     setenv("SS4S_NDL_AUDIO_LEAD_MS", audio_lead, 1);
     setenv("SS4S_NDL_AUDIO_SEQUENTIAL_PTS", app_configuration->audio_sequential_pts ? "1" : "0", 1);
-    /* Auto unsets it: the environment outlives the session. */
-    if (app_configuration->frame_drop_threshold == FRAME_DROP_THRESHOLD_AUTO) {
-        unsetenv("SS4S_NDL_FRAME_DROP_THRESHOLD");
-    } else {
-        char frame_drop[8];
-        snprintf(frame_drop, sizeof(frame_drop), "%d", app_configuration->frame_drop_threshold);
-        setenv("SS4S_NDL_FRAME_DROP_THRESHOLD", frame_drop, 1);
-    }
 #endif
 
     /* Rubylight paces video by its own route unless the client says it is on

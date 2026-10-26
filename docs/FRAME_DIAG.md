@@ -92,14 +92,8 @@ If the log shows `queue avg ~0` / `starved ~100%`, NDL ignored the future PTS an
 V-Sync 2/3/4 frames will not change delay or pans. Aurora then falls back to PTS=now.
 
 At native 4K (3840×2160) NDL can queue decode faster than the 120 Hz panel drains,
-so latency grows. **Settings → Experimental → Frame drop threshold** caps that queue
-(`SS4S_NDL_FRAME_DROP_THRESHOLD`): ss4s calls `NDL_DirectVideoSetFrameDropThreshold(n)`
-right before every `NDL_DirectMediaLoad`, because NDL copies it into the load payload
-(`esInfo.videoRenderQueueThreshold`), clears it on unload and ignores 0 and 1
-(truebest/backend_ndl). Auto uses 2 frames at 4K and none below; AV1 never gets one.
-Each load logs `NDL_DirectVideoSetFrameDropThreshold(n) before load rc=…` or
-`Frame drop threshold off (…)`. The old call, `(1)` after the load, never took effect.
-Whether the C5 honours it is not verified yet.
+so latency grows. `NDL_DirectVideoSetFrameDropThreshold(1)` drops late frames instead
+of letting that backlog run away. Scaled 3.6K does not hit this path.
 
 ## 5.1 audio on webOS
 

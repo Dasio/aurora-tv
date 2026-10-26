@@ -5,6 +5,7 @@ target_sources(moonlight-lib PRIVATE
         game_mode.c
         stream_priority.c
         bt_sniff.c
+        steam_ble.c
         dualsense_usb.c
         keyboard_evdev.c
         sdl_webos_sdl3.c)

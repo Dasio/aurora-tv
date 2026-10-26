@@ -250,34 +250,6 @@ void testLauncherGridRowsDefaultRoundTripAndRange() {
     settings.ini_path = ini_backup;
 }
 
-void testFrameDropThresholdDefaultRoundTripAndRange() {
-    TEST_ASSERT_EQUAL_INT(FRAME_DROP_THRESHOLD_AUTO, settings.frame_drop_threshold);
-
-    char *ini_backup = settings.ini_path;
-    settings.ini_path = "settings_frame_drop_tmp.ini";
-    const int valid[] = {FRAME_DROP_THRESHOLD_OFF, 2, 3, FRAME_DROP_THRESHOLD_AUTO};
-    for (size_t i = 0; i < sizeof(valid) / sizeof(valid[0]); i++) {
-        settings.frame_drop_threshold = valid[i];
-        TEST_ASSERT_TRUE(settings_save(&settings));
-        settings.frame_drop_threshold = 99;
-        TEST_ASSERT_TRUE(settings_read(&settings));
-        TEST_ASSERT_EQUAL_INT(valid[i], settings.frame_drop_threshold);
-    }
-
-    /* Anything the dropdown cannot show reads back as Auto. */
-    const char *const out_of_range[] = {"1", "4", "8", "-2"};
-    for (size_t i = 0; i < sizeof(out_of_range) / sizeof(out_of_range[0]); i++) {
-        char line[64];
-        snprintf(line, sizeof(line), "[video]\nframe_drop_threshold = %s\n", out_of_range[i]);
-        write_file(settings.ini_path, line);
-        settings.frame_drop_threshold = FRAME_DROP_THRESHOLD_OFF;
-        TEST_ASSERT_TRUE(settings_read(&settings));
-        TEST_ASSERT_EQUAL_INT(FRAME_DROP_THRESHOLD_AUTO, settings.frame_drop_threshold);
-    }
-    remove(settings.ini_path);
-    settings.ini_path = ini_backup;
-}
-
 /* Creates the (per-test) config dir holding a moonlight.ini; returns its path. */
 static char *make_legacy_ini(const char *content) {
     TEST_ASSERT_EQUAL_INT(0, mkdir(settings.conf_dir, 0700));
@@ -326,7 +298,6 @@ int main() {
     RUN_TEST(testDefaultNtscAndSmoothFlags);
     RUN_TEST(testIdrRefreshIntervalMsDefaultAndClamp);
     RUN_TEST(testLauncherGridRowsDefaultRoundTripAndRange);
-    RUN_TEST(testFrameDropThresholdDefaultRoundTripAndRange);
     RUN_TEST(testMigratesLegacyMoonlightIni);
     RUN_TEST(testAuroraIniWinsOverLegacyMoonlightIni);
     return UNITY_END();
