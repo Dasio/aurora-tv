@@ -267,3 +267,9 @@ bitrate. Do not "fix" it by changing HEVC. For 120 fps, use HEVC.
   provides `sps_parser` (H.264/HEVC only, so AV1 streams report no dimensions in stats).
 - webOS video capability caps in ss4s are measured device limits, not guesses (streams
   above the cap crash some TVs) — don't raise them without hardware testing.
+- `core/moonlight-common-c` is the GuiDev1994 fork and carries Aurora-only changes, among
+  them the Rubylight link hints: `STREAM_CONFIGURATION.clientWireless`/`clientLinkMbps`
+  become `x-rl-video[0].clientWireless` and `x-ss-video[0].pyrowaveLinkMbps` in the SDP
+  (Sunshine-family hosts only). `stream/link_hint.c` fills them from sysfs. Rebasing the
+  fork onto upstream must keep them. PyroWave itself is unusable on webOS (no Vulkan);
+  the link hint applies to H.264/HEVC/AV1 pacing too and does not request it.
