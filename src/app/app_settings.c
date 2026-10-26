@@ -489,6 +489,8 @@ static int settings_parse(app_settings_t *config, const char *section, const cha
         config->force_full_color_range = INI_IS_TRUE(value);
     } else if (INI_FULL_MATCH("video", "cadence_pacing")) {
         /* Retired: C5 NDL HEVC ignores future PTS, so host-clock pacing changed nothing. */
+    } else if (INI_FULL_MATCH("video", "frame_drop_threshold")) {
+        /* Retired (#101): the C5 render queue never reaches the threshold, 4K120 delay unchanged. */
     } else if (INI_FULL_MATCH("video", "render_queue_frames")) {
         /* Retired V-Sync queue: keep 0 so old ini files cannot re-enable it. */
         config->render_queue_frames = 0;
