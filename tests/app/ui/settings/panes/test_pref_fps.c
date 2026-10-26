@@ -17,9 +17,12 @@ void test_basic() {
 
     waitFor(100);
 
-    fakeKeyPress(SDLK_DOWN); // Focus on the slider
+    fakeKeyPress(SDLK_DOWN); // Focus on the text field
 
-    fakeKeyPress(SDLK_RIGHT); // Increase the FPS value by 5
+    fakeKeyPress(SDLK_BACKSPACE);
+    fakeKeyPress(SDLK_BACKSPACE); // Clear the current "30"
+
+    fakeInput("35");
 
     fakeKeyPress(SDLK_DOWN); // Select dialog buttons
 

@@ -18,6 +18,8 @@ static void dropdown_delete_cb(lv_event_t *e);
 
 static void cus_fps_dialog_cb(lv_event_t *e);
 
+static void cus_fps_input_key_cb(lv_event_t *e);
+
 typedef struct pref_dropdown_fps_ctx {
     lv_obj_t *dropdown;
     pref_dropdown_int_entry_t *entries;
@@ -169,6 +171,7 @@ void dropdown_fps_select_cb(lv_event_t *e) {
     lv_textarea_set_text(ta, value);
     lv_obj_set_user_data(ta, ctx);
     lv_obj_set_width(ta, LV_PCT(100));
+    lv_obj_add_event_cb(ta, cus_fps_input_key_cb, LV_EVENT_KEY, msgbox);
 
     lv_obj_add_event_cb(msgbox, cus_fps_dialog_cb, LV_EVENT_VALUE_CHANGED, ta);
 
@@ -223,5 +226,14 @@ static void cus_fps_dialog_cb(lv_event_t *e) {
     ctx->cus_value_set = true;
     lv_event_send(ctx->dropdown, LV_EVENT_VALUE_CHANGED, NULL);
     lv_msgbox_close_async(mbox);
+}
+
+static void cus_fps_input_key_cb(lv_event_t *e) {
+    if (lv_event_get_key(e) != LV_KEY_DOWN) {
+        return;
+    }
+    // The text area keeps every arrow key, so without this the D-pad can never reach OK.
+    lv_obj_t *msgbox = lv_event_get_user_data(e);
+    lv_group_focus_obj(lv_msgbox_get_btns(msgbox));
 }
 

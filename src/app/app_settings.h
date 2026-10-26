@@ -183,7 +183,7 @@ bool settings_read(app_settings_t *config);
 
 bool settings_save(app_settings_t *config);
 
-/** Keep stream.fps aligned with client_refresh_rate_x100 when a fractional rate is set. */
+/** Same as settings_reconcile_refresh_rate: client_refresh_rate_x100 follows stream.fps, never the reverse. */
 void settings_sync_refresh_rate(app_settings_t *config);
 
 /** webOS: apply NTSC x100 only when use_ntsc_refresh for 30/60/120/240; else clear for presets. */
