@@ -77,5 +77,7 @@ jobs:
           name: webos-snapshot-${{ env.SHORT_SHA }}
           path: dist/*.ipk
 
+      # Aurora needs webOS 5 or newer: webOS 4 and older have no libcurl.so.4 (see
+      # cmake/PackageWebOS.cmake), so only those firmwares are checked.
       - name: Compatibility Check
-        run: webosbrew-ipk-verify -f markdown -d -o $GITHUB_STEP_SUMMARY dist/*.ipk
+        run: webosbrew-ipk-verify -r '>=5' -f markdown -d -o $GITHUB_STEP_SUMMARY dist/*.ipk

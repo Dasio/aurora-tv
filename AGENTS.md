@@ -48,6 +48,9 @@ Gotchas:
   deploy must happen inside a single `wsl` call** or the IPK disappears.
 - Changes to streaming behaviour can only be validated on a real device against a real
   host. CI proves compilation, nothing more.
+- Aurora needs webOS 5 or newer. webOS 4 and older ship curl only as `libcurl.so.5`; the
+  `commons-curl-abi-fix` shim that bridged that made the C5 fail to start and was removed
+  in v1.3.1. Don't bring it back. The CI compatibility check runs with `-r '>=5'`.
 
 ## Tests
 

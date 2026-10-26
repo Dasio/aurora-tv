@@ -97,6 +97,7 @@ Aurora is built via **cross-compilation** on **Linux** (or WSL2 on Windows).
 
 ### Compatibility
 
+- **webOS 5 or newer** is required. webOS 4 and older ship curl only as `libcurl.so.5`, while Aurora links `libcurl.so.4` (see `cmake/PackageWebOS.cmake`). CI checks the package against webOS 5+ firmware only (`webosbrew-ipk-verify -r '>=5'`).
 - **webOS 6.x** (LG C1) – NDL, SMP, H.265, HDR
 - **ARM** – toolchain `arm-webos-linux-gnueabi`
 
