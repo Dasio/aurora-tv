@@ -234,6 +234,15 @@ ruled out, so nobody repeats it:
 | Bitrate 270 → below 100 Mbps (3.6K pan hitch) | no change |
 | 120 Hz vs 119.94 Hz | no change |
 | Host-clock cadence pacing (punktfunk-style: host PTS → NDL clock, p98 jitter cushion, +0–2 frames), with primed Opus audio plane | no change: PTS led arrival by up to 40 ms yet render queue stayed 0–2; C5 NDL HEVC presents on arrival. Removed |
+| Frame drop threshold 2/3 armed before load (#101, `videoRenderQueueThreshold` reaches the esplayer payload) | **4K120 delay unchanged** (2026-10-26, Auto/2/3). Render queue stays 0–1, so the threshold never fires. Reverted in v1.3.3 (ss4s `623e1c1`) |
+
+The 4K120 delay is the picture only: audio and input stay real time, and a phone decoding the
+same host at 4K120 HDR 290 Mbps is fine. Frame diag shows arrival vs host PTS constant and feed
+at 120 fps. Delay grows with pixels × bitrate (3712×2088 slower than 4K, 80 Mbps stable, 150+
+grows), which points at the C5 HEVC decoder falling behind with input piling up before it. The
+esplayer `Dropped Frames: x of N` count follows input, not decoder output, so it reads 120 fps
+even then. ss4s `ndl-webos5` advertises `maxBitrate` 95 Mbps on high-end SoCs, and
+`session_config_init` deliberately skips that cap on webOS.
 
 Facts that matter and are easy to get wrong:
 
