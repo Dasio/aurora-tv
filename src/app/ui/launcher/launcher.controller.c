@@ -154,7 +154,7 @@ void launcher_refresh_server_label(launcher_fragment_t *controller) {
     if (selected != NULL && selected->server != NULL && selected->server->hostname != NULL) {
         lv_label_set_text(controller->server_label, selected->server->hostname);
     } else {
-        lv_label_set_text_static(controller->server_label, locstr("Select server"));
+        lv_label_set_text(controller->server_label, locstr("Select server"));
     }
 }
 

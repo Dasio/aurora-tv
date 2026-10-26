@@ -207,7 +207,7 @@ static void server_tile_bind(server_popup_t *popup, lv_obj_t *item, int position
     const server_popup_entry_t *entry = &popup->entries[position];
     lv_label_set_text(holder->title, entry->hostname);
     lv_label_set_text_static(holder->icon, server_entry_icon(entry));
-    lv_label_set_text_static(holder->status, server_entry_status(entry));
+    lv_label_set_text(holder->status, server_entry_status(entry));
     lv_obj_set_style_text_color(holder->icon, ml_color_hex(entry->selected ? ML_COLOR_PRIMARY : ML_COLOR_TEXT), 0);
     if (entry->selected) {
         lv_obj_add_state(item, LV_STATE_CHECKED);
