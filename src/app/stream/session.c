@@ -325,6 +325,7 @@ void session_config_init(app_t *app, session_config_t *config, const SERVER_DATA
         config->stream.bitrate = (int) video_cap.maxBitrate;
     }
 #endif
+    config->hdr = app_config->hdr && video_cap.hdr;
     if (video_cap.codecs & SS4S_VIDEO_H264) {
         config->stream.supportedVideoFormats |= VIDEO_FORMAT_H264;
     }

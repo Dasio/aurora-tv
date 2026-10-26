@@ -64,6 +64,8 @@ typedef struct AUDIO_INFO {
 
 typedef struct session_config_t {
     STREAM_CONFIGURATION stream;
+    /** HDR requested and the decoder supports it; a 10-bit stream without it is 10-bit SDR. */
+    bool hdr;
     bool sops;
     bool view_only;
     bool local_audio;

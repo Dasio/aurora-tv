@@ -98,7 +98,7 @@ int session_worker(session_t *session) {
     commons_log_info("Session", "Launch gamepad mask=0x%x (local count=%d, gfe=%d)", gamepad_mask,
                      app_input_get_gamepads_count(&app->input), server->isGfe ? 1 : 0);
     int ret = gs_start_app(client, server, &session->config.stream, appId, server->isGfe, session->config.sops,
-                           session->config.local_audio, gamepad_mask, surround_params);
+                           session->config.local_audio, gamepad_mask, surround_params, session->config.hdr);
     if (ret != GS_OK) {
         session_set_state(session, STREAMING_ERROR);
         const char *gs_error = NULL;
