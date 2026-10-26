@@ -55,20 +55,21 @@ static bool read_keyboard(app_ui_input_t *input, const SDL_KeyboardEvent *event,
 
 static bool read_event(const SDL_Event *event, lv_drv_sdl_key_t *state);
 
+static int8_t stick_held_x; /* -1 left, 0, +1 right */
+static int8_t stick_held_y; /* -1 up, 0, +1 down */
+
 /** Left-stick edge → one LVGL key (punktfunk-style menu nav). */
 static bool read_stick_menu_nav(const SDL_ControllerAxisEvent *axis, lv_drv_sdl_key_t *state) {
     enum { DEAD = 16000 };
-    static int8_t held_x; /* -1 left, 0, +1 right */
-    static int8_t held_y; /* -1 up, 0, +1 down */
 
     int8_t *held = NULL;
     lv_key_t neg_key = 0, pos_key = 0;
     if (axis->axis == SDL_CONTROLLER_AXIS_LEFTX) {
-        held = &held_x;
+        held = &stick_held_x;
         neg_key = LV_KEY_LEFT;
         pos_key = LV_KEY_RIGHT;
     } else if (axis->axis == SDL_CONTROLLER_AXIS_LEFTY) {
-        held = &held_y;
+        held = &stick_held_y;
         neg_key = LV_KEY_UP;
         pos_key = LV_KEY_DOWN;
     } else {
@@ -113,6 +114,16 @@ int lv_sdl_init_key_input(lv_drv_sdl_key_t *drv, app_ui_input_t *input) {
 void lv_sdl_key_input_release_key(lv_indev_t *indev) {
     lv_drv_sdl_key_t *state = (lv_drv_sdl_key_t *) indev->driver;
     state->state = LV_INDEV_STATE_RELEASED;
+}
+
+void lv_sdl_key_input_release_gamepad(lv_indev_t *indev) {
+    /* A pad that disconnects (powered off, Bluetooth drop) never sends the button-up for a
+     * held D-pad direction, so LVGL kept repeating it for the rest of the session. */
+    lv_sdl_key_input_release_key(indev);
+    lv_indev_wait_release(indev);
+    stick_held_x = 0;
+    stick_held_y = 0;
+    stick_auto_release = false;
 }
 
 /* A gap between two reads longer than this means the main loop stalled rather

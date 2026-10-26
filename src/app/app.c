@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <assert.h>
 #include "lvgl/lv_sdl_drv_input.h"
+#include "lvgl/input/lv_drv_sdl_key.h"
 #include "lvgl/lv_disp_drv_app.h"
 #include "lvgl/util/lv_app_utils.h"
 
@@ -251,6 +252,9 @@ static int app_event_filter(void *userdata, SDL_Event *event) {
                 session_handle_input_event(app->session, event);
             }
             app_input_handle_event(&app->input, event);
+            if (app->ui.input.key.indev != NULL) {
+                lv_sdl_key_input_release_gamepad(app->ui.input.key.indev);
+            }
             return 0;
         }
         case SDL_JOYDEVICEADDED:
