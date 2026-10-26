@@ -38,6 +38,7 @@ typedef struct {
     lv_obj_t *stats_compact_label;  /* Single-line stats when show_stats_compact */
     lv_obj_t *stats_quality_indicator;  /* Colored dot: green/yellow/red by latency */
     lv_obj_t *stats_pin;
+    lv_obj_t *stats_compact_btn;  /* Switches between the compact bar and the full panel */
     lv_obj_t *notice, *notice_label;
     lv_obj_t *soft_kbd;
     lv_style_t overlay_button_style;
@@ -56,6 +57,9 @@ typedef struct {
 extern const lv_fragment_class_t streaming_controller_class;
 
 lv_obj_t *streaming_scene_create(lv_fragment_t *self, lv_obj_t *parent);
+
+/** Builds the stats panel in the layout app_configuration->show_stats_compact selects. */
+void streaming_stats_create(streaming_controller_t *controller, lv_obj_t *parent);
 
 void streaming_styles_init(streaming_controller_t *controller);
 

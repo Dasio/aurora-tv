@@ -15,6 +15,10 @@ static lv_obj_t *stat_label(lv_obj_t *parent, const char *title);
 
 static lv_obj_t *overlay_title(lv_obj_t *parent, const char *title, streaming_controller_t *controller);
 
+static lv_obj_t *stats_header_buttons(lv_obj_t *parent, streaming_controller_t *controller);
+
+static lv_obj_t *stats_header_btn(lv_obj_t *parent, streaming_controller_t *controller, const char *symbol);
+
 static lv_obj_t *gfn_metric_box(lv_obj_t *parent, const char *unit, const char *caption);
 
 static lv_obj_t *gfn_section_title(lv_obj_t *parent, const char *title);
@@ -54,9 +58,8 @@ lv_obj_t *streaming_scene_create(lv_fragment_t *self, lv_obj_t *parent) {
     lv_obj_t *video = lv_obj_create(overlay);
     lv_obj_remove_style_all(video);
     lv_obj_set_size(video, video_w, LV_PCT(video_h_pct));
-    int video_top = app_configuration->show_stats_compact ? LV_DPX(36) : LV_DPX(20);
-    lv_obj_align(video, LV_ALIGN_TOP_LEFT, LV_DPX(20), video_top);
     lv_obj_clear_flag(video, LV_OBJ_FLAG_CLICKABLE);
+    controller->video = video;
 
     lv_obj_t *bottom_stack = lv_obj_create(overlay);
     lv_obj_remove_style_all(bottom_stack);
@@ -131,7 +134,31 @@ lv_obj_t *streaming_scene_create(lv_fragment_t *self, lv_obj_t *parent) {
     lv_obj_add_style(exit_lbl, &controller->overlay_button_label_style, 0);
     lv_label_set_text(exit_lbl, locstr("Quit game"));
 
-    lv_obj_t *stats = lv_obj_create(overlay);
+    streaming_stats_create(controller, overlay);
+
+    lv_obj_add_flag(overlay, LV_OBJ_FLAG_HIDDEN);
+
+    controller->actions = actions;
+    controller->kbd_btn = kbd_btn;
+    controller->vmouse_btn = vmouse_btn;
+    controller->quit_btn = exit_btn;
+    controller->suspend_btn = suspend_btn;
+
+    streaming_overlay_resized(controller);
+
+    /* Settings → Show logs ON: force Live when the stream UI mounts. */
+    log_overlay_reassert();
+
+    // We return overlay instead of obj, and will delete the obj manually
+    return overlay;
+}
+
+void streaming_stats_create(streaming_controller_t *controller, lv_obj_t *parent) {
+    /* The compact bar runs across the top, so the overlay video starts below it. */
+    int video_top = app_configuration->show_stats_compact ? LV_DPX(36) : LV_DPX(20);
+    lv_obj_align(controller->video, LV_ALIGN_TOP_LEFT, LV_DPX(20), video_top);
+
+    lv_obj_t *stats = lv_obj_create(parent);
     lv_obj_remove_style_all(stats);
     lv_obj_set_style_text_color(stats, lv_color_white(), 0);
     lv_obj_set_style_pad_gap(stats, LV_DPX(5), 0);
@@ -162,21 +189,7 @@ lv_obj_t *streaming_scene_create(lv_fragment_t *self, lv_obj_t *parent) {
         lv_obj_set_style_text_font(controller->stats_compact_label, lv_theme_get_font_small(stats), 0);
         lv_obj_set_flex_grow(controller->stats_compact_label, 1);
 
-        /* Pin button inline, minimal */
-        lv_obj_t *stats_pin = lv_btn_create(stats);
-        lv_group_remove_obj(stats_pin);
-        lv_obj_add_flag(stats_pin, LV_OBJ_FLAG_CHECKABLE);
-        lv_obj_set_style_bg_opa(stats_pin, LV_OPA_TRANSP, 0);
-        lv_obj_set_style_border_opa(stats_pin, LV_OPA_TRANSP, 0);
-        lv_obj_set_style_pad_all(stats_pin, LV_DPX(4), 0);
-        lv_obj_set_style_radius(stats_pin, LV_DPX(4), 0);
-        lv_obj_set_style_text_opa(stats_pin, LV_OPA_50, 0);
-        lv_obj_set_style_text_opa(stats_pin, LV_OPA_COVER, LV_STATE_CHECKED);
-        lv_obj_set_ext_click_area(stats_pin, LV_DPX(5));
-        lv_obj_t *stat_pin_content = lv_img_create(stats_pin);
-        lv_obj_set_style_text_font(stat_pin_content, lv_theme_moonlight_get_iconfont_small(stats_pin), 0);
-        lv_img_set_src(stat_pin_content, MAT_SYMBOL_PUSH_PIN);
-        controller->stats_pin = stats_pin;
+        stats_header_buttons(stats, controller);
 
         memset(&controller->stats_items, 0, sizeof(controller->stats_items));
     } else {
@@ -224,24 +237,7 @@ lv_obj_t *streaming_scene_create(lv_fragment_t *self, lv_obj_t *parent) {
         controller->stats_items.audio = gfn_kv_row(stats, locstr("Audio"));
     }
 
-
-    lv_obj_add_flag(overlay, LV_OBJ_FLAG_HIDDEN);
-
-    controller->video = video;
-    controller->actions = actions;
-    controller->kbd_btn = kbd_btn;
-    controller->vmouse_btn = vmouse_btn;
-    controller->quit_btn = exit_btn;
-    controller->suspend_btn = suspend_btn;
     controller->stats = stats;
-
-    streaming_overlay_resized(controller);
-
-    /* Settings → Show logs ON: force Live when the stream UI mounts. */
-    log_overlay_reassert();
-
-    // We return overlay instead of obj, and will delete the obj manually
-    return overlay;
 }
 
 void streaming_styles_init(streaming_controller_t *controller) {
@@ -342,31 +338,62 @@ static lv_obj_t *overlay_title(lv_obj_t *parent, const char *title, streaming_co
     lv_obj_set_style_bg_color(stats_title, lv_color_black(), 0);
     lv_obj_set_style_pad_hor(stats_title, LV_DPX(8), 0);
     lv_obj_set_style_pad_ver(stats_title, LV_DPX(4), 0);
-    lv_obj_t *stats_pin = lv_btn_create(stats_title);
-    lv_group_remove_obj(stats_pin);
-    lv_obj_add_flag(stats_pin, LV_OBJ_FLAG_CHECKABLE);
-    lv_obj_set_style_bg_color(stats_pin, lv_color_black(), 0);
-    lv_obj_set_style_bg_opa(stats_pin, LV_OPA_20, 0);
-    lv_obj_set_style_pad_all(stats_pin, 0, 0);
-    lv_obj_set_style_radius(stats_pin, LV_DPX(4), 0);
-    lv_obj_set_style_transform_width(stats_pin, LV_DPX(5), 0);
-    lv_obj_set_style_transform_height(stats_pin, LV_DPX(5), 0);
-    lv_obj_set_style_text_opa(stats_pin, LV_OPA_50, 0);
-
-    lv_obj_set_style_transform_width(stats_pin, LV_DPX(5), LV_STATE_PRESSED);
-    lv_obj_set_style_transform_height(stats_pin, LV_DPX(5), LV_STATE_PRESSED);
-    lv_obj_set_style_bg_opa(stats_pin, LV_OPA_40, LV_STATE_PRESSED);
-
-    lv_obj_set_style_bg_color(stats_pin, lv_color_black(), LV_STATE_CHECKED);
-    lv_obj_set_style_text_opa(stats_pin, LV_OPA_COVER, LV_STATE_CHECKED);
-    lv_obj_set_style_bg_opa(stats_pin, LV_OPA_10, LV_STATE_CHECKED);
-    lv_obj_set_ext_click_area(stats_pin, LV_DPX(5));
-
-    lv_obj_t *stat_pin_content = lv_img_create(stats_pin);
-    lv_obj_set_style_text_font(stat_pin_content, lv_theme_moonlight_get_iconfont_small(stat_pin_content), 0);
-    lv_img_set_src(stat_pin_content, MAT_SYMBOL_PUSH_PIN);
-
-    lv_obj_align(stats_pin, LV_ALIGN_RIGHT_MID, 0, 0);
-    controller->stats_pin = stats_pin;
+    lv_obj_t *buttons = stats_header_buttons(stats_title, controller);
+    lv_obj_align(buttons, LV_ALIGN_RIGHT_MID, 0, 0);
     return stats_title;
+}
+
+/* Layout toggle then pin, left to right — also their order in the focus group. */
+static lv_obj_t *stats_header_buttons(lv_obj_t *parent, streaming_controller_t *controller) {
+    bool compact = app_configuration->show_stats_compact;
+    lv_obj_t *row = lv_obj_create(parent);
+    lv_obj_remove_style_all(row);
+    lv_obj_set_size(row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    // Full-mode buttons draw 5 DPX past their box, and the focus outline 4: space them out, don't clip either
+    lv_obj_set_style_pad_gap(row, compact ? LV_DPX(5) : LV_DPX(16), 0);
+    lv_obj_add_flag(row, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+    controller->stats_compact_btn = stats_header_btn(row, controller, compact ? MAT_SYMBOL_OPEN_IN_FULL
+                                                                              : MAT_SYMBOL_CLOSE_FULLSCREEN);
+    controller->stats_pin = stats_header_btn(row, controller, MAT_SYMBOL_PUSH_PIN);
+    return row;
+}
+
+static lv_obj_t *stats_header_btn(lv_obj_t *parent, streaming_controller_t *controller, const char *symbol) {
+    lv_obj_t *btn = lv_btn_create(parent);
+    lv_group_remove_obj(btn);
+    lv_group_add_obj(controller->group, btn);
+    lv_obj_add_style(btn, &controller->overlay_button_style_focused, LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_radius(btn, LV_DPX(4), 0);
+    lv_obj_set_style_text_opa(btn, LV_OPA_50, 0);
+    lv_obj_set_style_text_opa(btn, LV_OPA_COVER, LV_STATE_CHECKED);
+    if (app_configuration->show_stats_compact) {
+        lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, 0);
+        lv_obj_set_style_border_opa(btn, LV_OPA_TRANSP, 0);
+        lv_obj_set_style_pad_all(btn, LV_DPX(4), 0);
+    } else {
+        lv_obj_set_style_bg_color(btn, lv_color_black(), 0);
+        lv_obj_set_style_bg_opa(btn, LV_OPA_20, 0);
+        lv_obj_set_style_pad_all(btn, 0, 0);
+        lv_obj_set_style_transform_width(btn, LV_DPX(5), 0);
+        lv_obj_set_style_transform_height(btn, LV_DPX(5), 0);
+
+        lv_obj_set_style_transform_width(btn, LV_DPX(5), LV_STATE_PRESSED);
+        lv_obj_set_style_transform_height(btn, LV_DPX(5), LV_STATE_PRESSED);
+        lv_obj_set_style_bg_opa(btn, LV_OPA_40, LV_STATE_PRESSED);
+
+        lv_obj_set_style_bg_color(btn, lv_color_black(), LV_STATE_CHECKED);
+        lv_obj_set_style_bg_opa(btn, LV_OPA_10, LV_STATE_CHECKED);
+
+        // The focus outline takes the enlarged background's place, so it fits the title's padding
+        lv_obj_set_style_transform_width(btn, 0, LV_STATE_FOCUS_KEY);
+        lv_obj_set_style_transform_height(btn, 0, LV_STATE_FOCUS_KEY);
+    }
+    lv_obj_set_ext_click_area(btn, LV_DPX(5));
+
+    lv_obj_t *content = lv_img_create(btn);
+    lv_obj_set_style_text_font(content, lv_theme_moonlight_get_iconfont_small(content), 0);
+    lv_img_set_src(content, symbol);
+    return btn;
 }
