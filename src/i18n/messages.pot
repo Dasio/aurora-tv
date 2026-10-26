@@ -561,22 +561,6 @@ msgstr ""
 msgid "Low latency"
 msgstr ""
 
-#: src/app/ui/settings/panes/experimental.pane.c:90
-msgid "Auto (4K)"
-msgstr ""
-
-#: src/app/ui/settings/panes/experimental.pane.c:91
-msgid "Off"
-msgstr ""
-
-#: src/app/ui/settings/panes/experimental.pane.c:92
-msgid "2 frames"
-msgstr ""
-
-#: src/app/ui/settings/panes/experimental.pane.c:93
-msgid "3 frames"
-msgstr ""
-
 #: src/app/ui/settings/panes/experimental.pane.c:94
 #: src/app/ui/settings/settings.controller.c:41
 msgid "Experimental"
@@ -615,16 +599,6 @@ msgstr ""
 #: src/app/ui/settings/panes/experimental.pane.c:278
 #: src/app/ui/settings/panes/experimental.pane.c:281
 msgid "Refresh interval"
-msgstr ""
-
-#: src/app/ui/settings/panes/experimental.pane.c:173
-msgid "Frame drop threshold"
-msgstr ""
-
-#: src/app/ui/settings/panes/experimental.pane.c:180
-msgid ""
-"Drops late frames once the TV queues this many, so delay cannot build up. "
-"Auto: 2 at 4K. Never used with AV1."
 msgstr ""
 
 #: src/app/ui/settings/panes/experimental.pane.c:155

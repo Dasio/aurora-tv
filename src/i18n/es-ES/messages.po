@@ -593,22 +593,6 @@ msgstr "Calidad"
 msgid "Low latency"
 msgstr "Baja latencia"
 
-#: src/app/ui/settings/panes/experimental.pane.c:90
-msgid "Auto (4K)"
-msgstr "Automático (4K)"
-
-#: src/app/ui/settings/panes/experimental.pane.c:91
-msgid "Off"
-msgstr "Desactivado"
-
-#: src/app/ui/settings/panes/experimental.pane.c:92
-msgid "2 frames"
-msgstr "2 fotogramas"
-
-#: src/app/ui/settings/panes/experimental.pane.c:93
-msgid "3 frames"
-msgstr "3 fotogramas"
-
 #: src/app/ui/settings/panes/experimental.pane.c:94
 #: src/app/ui/settings/settings.controller.c:41
 msgid "Experimental"
@@ -656,18 +640,6 @@ msgstr "Refresco periódico del decodificador (HEVC)"
 #: src/app/ui/settings/panes/experimental.pane.c:281
 msgid "Refresh interval"
 msgstr "Intervalo de refresco"
-
-#: src/app/ui/settings/panes/experimental.pane.c:173
-msgid "Frame drop threshold"
-msgstr "Umbral de descarte de fotogramas"
-
-#: src/app/ui/settings/panes/experimental.pane.c:180
-msgid ""
-"Drops late frames once the TV queues this many, so delay cannot build up. "
-"Auto: 2 at 4K. Never used with AV1."
-msgstr ""
-"Descarta los fotogramas tardíos cuando el televisor acumula esa cantidad, "
-"para que no crezca el retraso. Automático: 2 en 4K. Nunca se aplica a AV1."
 
 #: src/app/ui/settings/panes/experimental.pane.c:155
 msgid "Adaptive bitrate"

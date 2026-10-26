@@ -45,12 +45,6 @@ enum {
  */
 #define SURROUND_51_PCM 1
 
-/** webOS NDL frame drop threshold, in frames. AUTO leaves it to SS4S: 2 at 4K, none below. */
-#define FRAME_DROP_THRESHOLD_AUTO (-1)
-#define FRAME_DROP_THRESHOLD_OFF 0
-#define FRAME_DROP_THRESHOLD_MIN 2
-#define FRAME_DROP_THRESHOLD_MAX 3
-
 /** Home screen game grid rows; the column count comes from apps_grid_columns(). */
 #define LAUNCHER_GRID_ROWS_MIN 1
 #define LAUNCHER_GRID_ROWS_MAX 3
@@ -106,8 +100,6 @@ typedef struct app_settings_t {
      * on arrival). Old render_queue_frames keys are ignored.
      */
     int render_queue_frames;
-    /** webOS NDL: frames the TV may queue before it drops late ones (FRAME_DROP_THRESHOLD_*). */
-    int frame_drop_threshold;
     /**
      * webOS NDL Opus passthrough (5.1): fixed lead on audio stamps, in ms. Buffers that much
      * audio in the TV's plane so late/bunched packets do not cut out; sound trails picture
