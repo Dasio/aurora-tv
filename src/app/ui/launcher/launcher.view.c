@@ -173,7 +173,7 @@ lv_obj_t *launcher_win_create(lv_fragment_t *self, lv_obj_t *parent) {
     lv_obj_set_style_text_font(server_label, lv_theme_get_font_small(server_btn), 0);
     lv_label_set_long_mode(server_label, LV_LABEL_LONG_DOT);
     lv_obj_set_style_max_width(server_label, LV_DPX(180), 0);
-    lv_label_set_text_static(server_label, locstr("Select server"));
+    lv_label_set_text(server_label, locstr("Select server"));
     lv_obj_clear_flag(server_label, LV_OBJ_FLAG_CLICKABLE);
 
     lv_obj_t *srv_chevron = lv_label_create(server_btn);
