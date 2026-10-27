@@ -189,11 +189,11 @@ static void scan_input_devices(addr_list_t *out) {
 }
 
 /*
- * Starts luna-send-pub with its output on a pipe; returns its pid, or -1. A subscription
- * keeps it running ("-i"); otherwise it exits after the reply ("-n 1"). It gets SIGTERM if the thread
- * that started it dies, so a crash does not leave a GATT client behind.
+ * Starts a luna-send-pub subscription ("-i") with its output on a pipe; returns its pid, or
+ * -1. It gets SIGTERM if the thread that started it dies, so a crash does not leave a GATT
+ * client behind.
  */
-static pid_t luna_send_pub(bool subscribe, const char *uri, const char *payload, int *out_fd) {
+static pid_t luna_send_pub_subscribe(const char *uri, const char *payload, int *out_fd) {
     int fds[2];
     if (pipe2(fds, O_CLOEXEC) != 0) {
         return -1;
@@ -202,13 +202,7 @@ static pid_t luna_send_pub(bool subscribe, const char *uri, const char *payload,
     if (pid == 0) {
         prctl(PR_SET_PDEATHSIG, SIGTERM);
         dup2(fds[1], STDOUT_FILENO);
-        close(fds[0]);
-        close(fds[1]);
-        if (subscribe) {
-            execl(LUNA_SEND_PUB, "luna-send-pub", "-i", uri, payload, (char *) NULL);
-        } else {
-            execl(LUNA_SEND_PUB, "luna-send-pub", "-n", "1", uri, payload, (char *) NULL);
-        }
+        execl(LUNA_SEND_PUB, "luna-send-pub", "-i", uri, payload, (char *) NULL);
         _exit(127);
     }
     close(fds[1]);
@@ -218,6 +212,15 @@ static pid_t luna_send_pub(bool subscribe, const char *uri, const char *payload,
     }
     *out_fd = fds[0];
     return pid;
+}
+
+static bool json_bool(jvalue_ref obj, const char *key) {
+    bool value = false;
+    jvalue_ref v = jobject_get(obj, j_cstr_to_buffer(key));
+    if (jis_boolean(v)) {
+        jboolean_get(v, &value);
+    }
+    return value;
 }
 
 /* Reads one reply object: returnValue, and errorText (may be empty) on failure. */
@@ -231,11 +234,7 @@ static bool reply_ok(const char *json, char *error, size_t error_len) {
         snprintf(error, error_len, "%s", json);
         return false;
     }
-    bool ok = false;
-    jvalue_ref rv = jobject_get(root, J_CSTR_TO_BUF("returnValue"));
-    if (jis_boolean(rv)) {
-        jboolean_get(rv, &ok);
-    }
+    bool ok = json_bool(root, "returnValue");
     jvalue_ref text = jobject_get(root, J_CSTR_TO_BUF("errorText"));
     if (!ok && jis_string(text)) {
         raw_buffer buf = jstring_get_fast(text);
@@ -247,25 +246,17 @@ static bool reply_ok(const char *json, char *error, size_t error_len) {
 
 /* Calls a one-shot blegatt method. On failure, errorText goes to error (may be empty). */
 static bool gatt_call(const char *uri, const char *payload, char *error, size_t error_len) {
-    int fd = -1;
-    pid_t pid = luna_send_pub(false, uri, payload, &fd);
-    if (pid < 0) {
-        snprintf(error, error_len, "luna-send-pub did not start");
-        return false;
-    }
-    char reply[1024];
-    size_t len = 0;
-    ssize_t n;
-    while (len < sizeof(reply) - 1 && ((n = read(fd, reply + len, sizeof(reply) - 1 - len)) > 0 || (n < 0 && errno == EINTR))) {
-        len += n > 0 ? (size_t) n : 0;
-    }
-    reply[len] = '\0';
-    close(fd);
-    waitpid(pid, NULL, 0);
-    if (len == 0) {
+    char command[256], reply[1024];
+    snprintf(command, sizeof(command), LUNA_SEND_PUB " -n 1 %s '%s'", uri, payload);
+    FILE *f = popen(command, "r");
+    if (f == NULL || fgets(reply, sizeof(reply), f) == NULL) {
+        if (f != NULL) {
+            pclose(f);
+        }
         snprintf(error, error_len, "no reply");
         return false;
     }
+    pclose(f);
     return reply_ok(reply, error, error_len);
 }
 
@@ -275,7 +266,7 @@ static void open_client(steam_pad_t *pad) {
     pad->connected = false;
     pad->mtu_requested = false;
     pad->line_len = 0;
-    pad->conn_pid = luna_send_pub(true, URI_GATT_CONNECT, payload, &pad->conn_fd);
+    pad->conn_pid = luna_send_pub_subscribe(URI_GATT_CONNECT, payload, &pad->conn_fd);
     if (pad->conn_pid < 0) {
         commons_log_warn("SteamBLE", "client/connect %s: luna-send-pub did not start", pad->addr);
         return;
@@ -314,11 +305,7 @@ static bool on_connect_message(steam_pad_t *pad, const char *json) {
     if (root == NULL) {
         return true;
     }
-    bool ok = false;
-    jvalue_ref rv = jobject_get(root, J_CSTR_TO_BUF("returnValue"));
-    if (jis_boolean(rv)) {
-        jboolean_get(rv, &ok);
-    }
+    bool ok = json_bool(root, "returnValue");
     jvalue_ref event = jobject_get(root, J_CSTR_TO_BUF("event"));
     jvalue_ref values = jobject_get(root, J_CSTR_TO_BUF("values"));
     if (!ok) {
@@ -339,10 +326,7 @@ static bool on_connect_message(steam_pad_t *pad, const char *json) {
         }
     } else if (jis_string(event) && jstring_equal2(event, J_CSTR_TO_BUF("onConnectionStateChange")) &&
                jis_object(values)) {
-        jvalue_ref value = jobject_get(values, J_CSTR_TO_BUF("connected"));
-        if (jis_boolean(value)) {
-            jboolean_get(value, &pad->connected);
-        }
+        pad->connected = json_bool(values, "connected");
     } else if (jis_string(event) && jstring_equal2(event, J_CSTR_TO_BUF("onRequestMtu"))) {
         pad->mtu_done = true;
         commons_log_info("SteamBLE", "Steam Controller %s: MTU exchanged", pad->addr);
